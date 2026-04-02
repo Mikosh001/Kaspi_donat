@@ -1,0 +1,6 @@
+pyside6
+pywin32
+uiautomation
+requests
+pydantic>=2
+sqlalchemy>=2

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stats Widget</title>
+    <link rel="stylesheet" href="/overlay.css">
+    <style>
+      body {
+        width: 800px;
+        min-height: 900px;
+        padding: 18px;
+      }
+      .board-card {
+        width: 100%;
+        min-height: 860px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .board-skin {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .board-title {
+        position: relative;
+        z-index: 1;
+        margin-bottom: 16px;
+        padding: 18px 26px;
+        font-size: clamp(2rem, 4.6vw, 4.6rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .accent-line {
+        position: relative;
+        z-index: 1;
+        height: 6px;
+        border-radius: 999px;
+        margin-bottom: 16px;
+      }
+      .rows {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 8px;
+      }
+      .row-item {
+        display: grid;
+        grid-template-columns: 70px 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px 22px;
+        border-radius: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+      .row-rank {
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+      .row-name {
+        font-size: clamp(1.6rem, 3vw, 2.8rem);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .row-amount {
+        font-size: clamp(1.5rem, 2.6vw, 2.8rem);
+        font-weight: 900;
+      }
+      .single-card {
+        position: relative;
+        z-index: 1;
+        padding: 28px;
+        border-radius: 24px;
+      }
+      .single-name {
+        font-size: clamp(2rem, 3.5vw, 3.2rem);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .single-amount {
+        margin-top: 12px;
+        font-size: clamp(1.6rem, 3vw, 2.6rem);
+        font-weight: 900;
+      }
+      .single-message {
+        margin-top: 14px;
+        font-size: 1.05rem;
+        line-height: 1.45;
+      }
+      .marquee {
+        position: relative;
+        z-index: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        padding: 12px 0;
+      }
+      .marquee-track {
+        display: inline-flex;
+        gap: 36px;
+        min-width: 100%;
+        animation: marquee 18s linear infinite;
+      }
+      .theme-classic .board-title,
+      .theme-pubg .board-title,
+      .theme-cyberpunk .board-title,
+      .theme-pink .board-title {
+        border: 2px solid transparent;
+      }
+      .theme-classic .board-title {
+        background: linear-gradient(135deg, rgba(32, 23, 11, 0.9), rgba(66, 49, 20, 0.92));
+        border-color: rgba(255, 188, 46, 0.48);
+        box-shadow: inset 0 1px 0 rgba(255, 233, 171, 0.2), 0 14px 30px rgba(0, 0, 0, 0.35);
+      }
+      .theme-classic .row-item,
+      .theme-classic .single-card {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .theme-pubg .board-skin {
+        background:
+          radial-gradient(circle at 50% 14%, rgba(255, 229, 111, 0.15), transparent 22%),
+          linear-gradient(180deg, rgba(255,245,18,0.08), transparent 20%),
+          linear-gradient(135deg, rgba(16,16,14,0.26), transparent 40%);
+        opacity: 1;
+      }
+      .theme-pubg .board-title {
+        background:
+          linear-gradient(180deg, rgba(15,15,12,0.86), rgba(38,38,28,0.92)),
+          linear-gradient(90deg, rgba(255,245,18,0.12), transparent);
+        border-color: rgba(255,245,18,0.7);
+        clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+        box-shadow: 0 0 0 3px #fff512, 0 0 0 6px rgba(156, 65, 0, 0.9), 0 18px 34px rgba(0,0,0,0.55);
+      }
+      .theme-pubg .row-item {
+        background: linear-gradient(135deg, rgba(25,25,20,0.96), rgba(42,42,31,0.96));
+        box-shadow: 0 0 0 2px rgba(156,65,0,0.9), inset 4px 0 0 rgba(255,245,18,0.35), inset -4px 0 0 rgba(255,245,18,0.35);
+        clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+      }
+      .theme-pubg .row-item.rank-1 {
+        box-shadow: 0 0 0 3px #fff512, 0 0 16px rgba(255,245,18,0.34), inset -6px 0 0 rgba(255,245,18,0.55);
+      }
+      .theme-pubg .row-name,
+      .theme-pubg .row-amount,
+      .theme-pubg .single-name,
+      .theme-pubg .single-amount {
+        text-shadow: 0 3px 8px rgba(0,0,0,0.9);
+      }
+      .theme-pubg .row-amount,
+      .theme-pubg .single-amount,
+      .theme-pubg .row-rank {
+        color: #fff512;
+      }
+      .theme-cyberpunk .board-skin {
+        background:
+          linear-gradient(90deg, rgba(69,245,255,0.08), transparent 32%),
+          linear-gradient(180deg, rgba(255,79,216,0.07), transparent 44%),
+          repeating-linear-gradient(135deg, rgba(69,245,255,0.04), rgba(69,245,255,0.04) 8px, transparent 8px, transparent 20px);
+      }
+      .theme-cyberpunk .board-title {
+        background: linear-gradient(135deg, rgba(7,13,30,0.92), rgba(29,8,34,0.92));
+        border-color: rgba(69,245,255,0.56);
+        box-shadow: 0 0 0 1px rgba(255,79,216,0.5), 0 0 24px rgba(69,245,255,0.2);
+      }
+      .theme-cyberpunk .row-item,
+      .theme-cyberpunk .single-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(69,245,255,0.24);
+        box-shadow: inset 0 0 0 1px rgba(255,79,216,0.18);
+      }
+      .theme-cyberpunk .row-rank,
+      .theme-cyberpunk .row-amount,
+      .theme-cyberpunk .single-amount {
+        color: #45f5ff;
+      }
+      .theme-pink .board-skin {
+        background:
+          radial-gradient(circle at 16% 20%, rgba(255,198,224,0.18), transparent 18%),
+          radial-gradient(circle at 80% 12%, rgba(255,94,168,0.16), transparent 16%),
+          linear-gradient(180deg, rgba(255,255,255,0.02), transparent 26%);
+      }
+      .theme-pink .board-title {
+        background: linear-gradient(135deg, rgba(80, 27, 58, 0.92), rgba(129, 51, 95, 0.95));
+        border-color: rgba(255,198,224,0.42);
+        box-shadow: 0 16px 34px rgba(67, 22, 48, 0.36);
+      }
+      .theme-pink .row-item,
+      .theme-pink .single-card {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,198,224,0.16);
+      }
+      .theme-pink .row-rank,
+      .theme-pink .row-amount,
+      .theme-pink .single-amount {
+        color: #ffc6e0;
+      }
+      .theme-glass .row-item,
+      .theme-glass .single-card {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      @keyframes marquee {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay-root">
+      <section class="overlay-card board-card theme-classic" id="board-card">
+        <div class="board-skin"></div>
+        <div class="board-title" id="board-title">ТОП ДОНАТ</div>
+        <div class="accent-line"></div>
+        <div id="board-content"></div>
+      </section>
+    </div>
+
+    <script src="/common.js"></script>
+    <script src="/stats.js"></script>
+  </body>
+</html>

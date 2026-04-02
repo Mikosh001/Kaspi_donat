@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kaz Alerts Admin</title>
+    <link rel="stylesheet" href="/theme.css">
+  </head>
+  <body>
+    <main class="designer-shell">
+      <header class="page-card designer-topbar">
+        <div>
+          <div class="eyebrow" data-i18n="eyebrow">Overlay Control Center</div>
+          <h1 class="page-title">Kaz Alerts <span class="accent" data-i18n="designer_title">Designer</span></h1>
+          <div class="subtitle" data-i18n="designer_subtitle">
+            Live preview, theme packs, TTS and widget setup in one panel.
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="lang-switch" aria-label="Language switch">
+            <button class="lang-btn is-active" data-lang="kk">KK</button>
+            <button class="lang-btn" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-light" id="preview-donation-button" data-i18n="test_donation">Тест донат</button>
+            <button class="btn btn-primary" id="save-all-button" data-i18n="save_all">Сақтау</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="metric-strip">
+        <article class="metric">
+          <span data-i18n="metric_donations">Donations</span>
+          <strong id="metric-donations">0</strong>
+        </article>
+        <article class="metric">
+          <span data-i18n="metric_total">Goal sum</span>
+          <strong id="metric-total">0 ₸</strong>
+        </article>
+        <article class="metric">
+          <span data-i18n="metric_goal">Goal progress</span>
+          <strong id="metric-goal">0%</strong>
+        </article>
+        <article class="metric">
+          <span data-i18n="metric_server">Server</span>
+          <strong id="metric-server">http://127.0.0.1:3400</strong>
+        </article>
+        <article class="metric">
+          <span data-i18n="metric_average">Average donation</span>
+          <strong id="metric-average">0 ₸</strong>
+        </article>
+        <article class="metric">
+          <span data-i18n="metric_repeat">Repeat donors</span>
+          <strong id="metric-repeat">0</strong>
+        </article>
+      </section>
+
+      <section class="workspace-grid">
+        <aside class="page-card designer-nav">
+          <button class="nav-tab is-active" data-tab="alert" data-i18n="tab_alert">Alert</button>
+          <button class="nav-tab" data-tab="boards" data-i18n="tab_boards">Top widgets</button>
+          <button class="nav-tab" data-tab="goal" data-i18n="tab_goal">Goal</button>
+          <button class="nav-tab" data-tab="music" data-i18n="tab_music">WidgetYT</button>
+          <button class="nav-tab" data-tab="links" data-i18n="tab_links">Links</button>
+        </aside>
+
+        <section class="page-card config-card">
+          <div class="tab-panel is-active" data-panel="alert">
+            <div class="panel-head">
+              <div>
+                <h2 class="section-title" data-i18n="alert_title">Alert designer</h2>
+                <div class="tiny" data-i18n="alert_hint">Live preview жаңарып тұрады, save баспай-ақ көресіз.</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="field-grid three">
+                <label>
+                  <span data-i18n="min_alert_amount">Min alert amount</span>
+                  <input id="alert-min-amount" type="number" min="0">
+                </label>
+                <label>
+                  <span data-i18n="master_volume">Master volume</span>
+                  <input id="alert-master-volume" type="range" min="0" max="100">
+                </label>
+                <label>
+                  <span data-i18n="default_style">Default style</span>
+                  <select id="alert-default-style"></select>
+                </label>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="panel-head">
+                <div>
+                  <h3 class="section-title" data-i18n="style_library">Style library</h3>
+                  <div class="tiny" data-i18n="style_library_hint">👁 Preview арқылы стильді көріп, бірден қолдануға болады.</div>
+                </div>
+              </div>
+              <div class="style-gallery" id="alert-style-gallery"></div>
+            </div>
+
+            <div class="section-card">
+              <div class="panel-head">
+                <div>
+                  <h3 class="section-title" data-i18n="tiers_title">Donation tiers</h3>
+                  <div class="tiny" data-i18n="tiers_hint">Әр суммаға бөлек GIF, sound, TTS, colors және animation.</div>
+                </div>
+                <button class="btn btn-light" id="add-tier-button" data-i18n="add_tier">+ Add tier</button>
+              </div>
+              <div class="list-stack" id="tiers-list"></div>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="boards">
+            <div class="panel-head">
+              <div>
+                <h2 class="section-title" data-i18n="boards_title">Top donor widgets</h2>
+                <div class="tiny" data-i18n="boards_hint">PUBG сияқты үлкен стильдер осы жерден таңдалады.</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <h3 class="section-title" data-i18n="top_day">Top day</h3>
+              <div class="field-grid three">
+                <label><span data-i18n="title_label">Title</span><input id="board-top-day-title" type="text"></label>
+                <label><span data-i18n="rows_label">Rows</span><input id="board-top-day-limit" type="number" min="1" max="20"></label>
+                <label>
+                  <span data-i18n="mode_label">Mode</span>
+                  <select id="board-top-day-mode">
+                    <option value="list" data-i18n="mode_list">List</option>
+                    <option value="marquee" data-i18n="mode_marquee">Marquee</option>
+                  </select>
+                </label>
+              </div>
+              <input id="board-top-day-style" type="hidden">
+              <div class="style-gallery" id="board-style-gallery"></div>
+            </div>
+
+            <div class="field-grid two" style="margin-top:18px;">
+              <div class="section-card">
+                <h3 class="section-title" data-i18n="top_month">Top month</h3>
+                <div class="field-grid two">
+                  <label><span data-i18n="title_label">Title</span><input id="board-top-month-title" type="text"></label>
+                  <label><span data-i18n="rows_label">Rows</span><input id="board-top-month-limit" type="number" min="1" max="20"></label>
+                </div>
+                <div class="field-grid two" style="margin-top:12px;">
+                  <label>
+                    <span data-i18n="mode_label">Mode</span>
+                    <select id="board-top-month-mode">
+                      <option value="list" data-i18n="mode_list">List</option>
+                      <option value="marquee" data-i18n="mode_marquee">Marquee</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span data-i18n="style_select">Style</span>
+                    <select id="board-top-month-style"></select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="section-card">
+                <h3 class="section-title" data-i18n="last_donation">Last donation</h3>
+                <div class="field-grid two">
+                  <label><span data-i18n="title_label">Title</span><input id="board-last-title" type="text"></label>
+                  <label>
+                    <span data-i18n="style_select">Style</span>
+                    <select id="board-last-style"></select>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card" style="margin-top:18px;">
+              <div class="panel-head">
+                <h3 class="section-title" data-i18n="aliases_title">Aliases</h3>
+                <button class="btn btn-light" id="add-alias-button" data-i18n="add_alias">+ Alias</button>
+              </div>
+              <div class="list-stack" id="aliases-list"></div>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="goal">
+            <div class="panel-head">
+              <div>
+                <h2 class="section-title" data-i18n="goal_title_panel">Goal widget</h2>
+                <div class="tiny" data-i18n="goal_hint">Goal preview да live түрде өзгереді.</div>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="field-grid three">
+                <label><span data-i18n="title_label">Title</span><input id="goal-title" type="text"></label>
+                <label><span data-i18n="base_amount">Base amount</span><input id="goal-base-amount" type="number" min="0"></label>
+                <label><span data-i18n="target_amount">Target amount</span><input id="goal-target-amount" type="number" min="1"></label>
+              </div>
+              <div class="field-grid three" style="margin-top:12px;">
+                <label>
+                  <span data-i18n="style_select">Style</span>
+                  <select id="goal-style"></select>
+                </label>
+                <label><span data-i18n="bar_color">Bar color</span><input id="goal-bar-color" type="color"></label>
+                <label><span data-i18n="text_color">Text color</span><input id="goal-text-color" type="color"></label>
+              </div>
+              <label class="switch">
+                <input id="goal-auto-increment" type="checkbox">
+                <span data-i18n="auto_increment">Auto increment donations into goal</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="music">
+            <div class="panel-head">
+              <div>
+                <h2 class="section-title" data-i18n="music_title_panel">WidgetYT</h2>
+                <div class="tiny" data-i18n="music_hint">Music widget alert-тен бөлек жұмыс істейді.</div>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="field-grid three">
+                <label>
+                  <span data-i18n="mode_label">Mode</span>
+                  <select id="youtube-mode">
+                    <option value="music" data-i18n="mode_music">Music</option>
+                    <option value="video" data-i18n="mode_video">Video</option>
+                  </select>
+                </label>
+                <label><span data-i18n="volume_label">Volume</span><input id="youtube-volume" type="range" min="0" max="100"></label>
+                <label><span data-i18n="min_alert_amount">Min amount</span><input id="youtube-min-amount" type="number" min="0"></label>
+              </div>
+              <div class="field-grid three" style="margin-top:12px;">
+                <label><span data-i18n="max_seconds">Max seconds</span><input id="youtube-max-seconds" type="number" min="10"></label>
+                <label><span data-i18n="panic_hotkey">Panic hotkey</span><input id="youtube-panic-hotkey" type="text"></label>
+                <label>
+                  <span data-i18n="style_select">Style</span>
+                  <select id="youtube-style-id"></select>
+                </label>
+              </div>
+              <div class="field-grid three" style="margin-top:12px;">
+                <label><span data-i18n="title_label">Title</span><input id="youtube-widget-title" type="text"></label>
+                <label><span data-i18n="subtitle_label">Subtitle</span><input id="youtube-widget-subtitle" type="text"></label>
+                <label><span data-i18n="font_family">Font family</span><input id="youtube-font-family" type="text" placeholder="Bahnschrift"></label>
+              </div>
+              <div class="field-grid three" style="margin-top:12px;">
+                <label><span data-i18n="accent_color">Accent color</span><input id="youtube-accent-color" type="color"></label>
+                <label><span data-i18n="text_color">Text color</span><input id="youtube-text-color" type="color"></label>
+                <label><span data-i18n="card_background">Card background</span><input id="youtube-card-background" type="text" placeholder="rgba(...)"></label>
+              </div>
+              <label style="margin-top:12px;">
+                <span data-i18n="background_image">Background image URL</span>
+                <input id="youtube-background-image" type="url" placeholder="https://...">
+              </label>
+              <label style="margin-top:12px;">
+                <span data-i18n="preview_youtube_url">Preview YouTube URL</span>
+                <input id="youtube-preview-url" type="url" placeholder="https://youtu.be/...">
+              </label>
+              <div class="field-grid two" style="margin-top:12px;">
+                <label class="switch">
+                  <input id="youtube-enabled" type="checkbox">
+                  <span data-i18n="enable_widgetyt">Enable widgetyt</span>
+                </label>
+                <label class="switch">
+                  <input id="youtube-show-badge" type="checkbox">
+                  <span data-i18n="show_badge">Show badge</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="links">
+            <div class="panel-head">
+              <div>
+                <h2 class="section-title" data-i18n="links_title">OBS / TikTok Studio links</h2>
+                <div class="tiny" data-i18n="links_hint">Бұл сілтемелер preview емес, дайын widget URL.</div>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="list-stack" id="links-list"></div>
+            </div>
+
+            <div class="section-card" style="margin-top:18px;">
+              <div class="panel-head">
+                <div>
+                  <h3 class="section-title" data-i18n="cloud_title">Cloud cabinet</h3>
+                  <div class="tiny" data-i18n="cloud_hint">Streamer профилі, device binding және token басқару.</div>
+                </div>
+              </div>
+              <div class="field-grid three">
+                <label><span data-i18n="cloud_streamer_id">Streamer ID</span><input id="cloud-streamer-id" type="text" readonly></label>
+                <label><span data-i18n="cloud_device_id">Device ID</span><input id="cloud-device-id" type="text"></label>
+                <label><span data-i18n="cloud_token">Streamer token</span><input id="cloud-token" type="text" placeholder="token..."></label>
+              </div>
+              <div class="button-row" style="margin-top:12px;">
+                <button class="btn btn-dark" id="cloud-register-button" data-i18n="cloud_register">Register</button>
+                <button class="btn btn-light" id="cloud-bind-button" data-i18n="cloud_bind">Bind device</button>
+                <button class="btn btn-light" id="cloud-rotate-button" data-i18n="cloud_rotate">Rotate token</button>
+              </div>
+              <div class="tiny" id="cloud-profile-summary" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="page-card preview-column">
+          <div class="panel-head">
+            <div>
+              <h2 class="section-title" data-i18n="live_preview">👁 Live Preview</h2>
+              <div class="tiny" data-i18n="live_preview_hint">Save баспай тұрып, draft preview автоматты түрде жаңарады.</div>
+            </div>
+          </div>
+          <div class="preview-panel">
+            <h3 class="section-title" data-i18n="preview_alert">Preview Alert</h3>
+            <iframe class="preview-frame-alert" id="widget-preview" src="/widget?preview=1"></iframe>
+          </div>
+          <div class="preview-panel" style="margin-top:18px;">
+            <h3 class="section-title" data-i18n="preview_widgetyt">Preview WidgetYT</h3>
+            <iframe class="preview-frame-alert" id="widgetyt-preview" src="/widgetyt?preview=1"></iframe>
+          </div>
+          <div class="preview-panel" style="margin-top:18px;">
+            <h3 class="section-title" data-i18n="preview_top">Preview Top Day</h3>
+            <iframe class="preview-frame-board" id="board-preview" src="/stats?board=top_day&preview=1"></iframe>
+          </div>
+          <div class="preview-panel" style="margin-top:18px;">
+            <h3 class="section-title" data-i18n="preview_goal">Preview Goal</h3>
+            <iframe class="preview-frame-goal" id="goal-preview" src="/goal?preview=1"></iframe>
+          </div>
+        </aside>
+      </section>
+
+      <section class="page-card">
+        <div class="muted-box" id="status-box" data-i18n="status_idle">
+          Өзгерістер live preview-ға түсіп тұрады. Save басқанда ғана негізгі settings сақталады.
+        </div>
+      </section>
+    </main>
+
+    <div class="style-modal hidden" id="style-modal">
+      <div class="style-modal-backdrop" id="style-modal-close"></div>
+      <div class="style-modal-card">
+        <div class="style-modal-head">
+          <strong id="style-modal-title">Style preview</strong>
+          <button class="modal-close" id="style-modal-close-button">×</button>
+        </div>
+        <iframe id="style-modal-frame" class="style-modal-frame" src="/stats?board=top_day&preview=1"></iframe>
+      </div>
+    </div>
+
+    <script src="/common.js"></script>
+    <script src="/admin-i18n.js"></script>
+    <script src="/admin.js"></script>
+  </body>
+</html>

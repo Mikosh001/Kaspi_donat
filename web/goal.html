@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Goal Widget</title>
+    <link rel="stylesheet" href="/overlay.css">
+    <style>
+      body { padding: 14px; }
+      .goal-card {
+        width: min(920px, 100%);
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .goal-title {
+        font-size: clamp(1.8rem, 4vw, 3rem);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .goal-shell {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 26px;
+        background: rgba(0,0,0,0.35);
+      }
+      .goal-bar {
+        position: relative;
+        height: 42px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255,255,255,0.08);
+      }
+      .goal-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--overlay-accent), var(--overlay-accent-soft));
+        transition: width 0.5s ease;
+      }
+      .goal-progress {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+      }
+      .goal-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 14px;
+        color: var(--overlay-muted);
+        font-size: 1rem;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay-root">
+      <section class="overlay-card goal-card style-ember" id="goal-card">
+        <div class="goal-title" id="goal-title">ЦЕЛЬ СБОРА</div>
+        <div class="goal-shell">
+          <div class="goal-bar">
+            <div class="goal-fill" id="goal-fill"></div>
+            <div class="goal-progress" id="goal-progress">0%</div>
+          </div>
+          <div class="goal-meta">
+            <span id="goal-current">0 ₸</span>
+            <span id="goal-target">0 ₸</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="/common.js"></script>
+    <script src="/goal.js"></script>
+  </body>
+  </html>

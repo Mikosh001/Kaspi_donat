@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alert Widget</title>
+    <link rel="stylesheet" href="/overlay.css">
+    <style>
+      body { padding: 18px; }
+      .widget-shell {
+        width: min(900px, 100%);
+        margin: 0 auto;
+      }
+      .alert-card {
+        display: none;
+        padding: 26px;
+        position: relative;
+        overflow: hidden;
+        border-color: var(--overlay-border);
+        font-family: var(--overlay-font);
+      }
+      .alert-card.is-visible {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 22px;
+        align-items: center;
+      }
+      .alert-card[data-animation="rise"].is-visible { animation: alert-rise 300ms ease-out; }
+      .alert-card[data-animation="pop"].is-visible { animation: alert-pop 320ms ease-out; }
+      .alert-card[data-animation="slide-left"].is-visible { animation: alert-slide-left 360ms ease-out; }
+      .alert-card[data-animation="flip"].is-visible { animation: alert-flip 420ms ease-out; transform-origin: center; }
+      .accent-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+      }
+      .gif-stack {
+        position: relative;
+        width: 180px;
+        height: 180px;
+      }
+      .gif-card {
+        position: absolute;
+        inset: 0;
+        border-radius: 28px;
+        overflow: hidden;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 14px 36px rgba(0,0,0,0.22);
+      }
+      .gif-card img { width: 100%; height: 100%; object-fit: cover; }
+      .gif-card.secondary-a {
+        inset: auto auto -14px 118px;
+        width: 74px;
+        height: 74px;
+        border-radius: 20px;
+        transform: rotate(8deg);
+      }
+      .gif-card.secondary-b {
+        inset: -10px auto auto 126px;
+        width: 62px;
+        height: 62px;
+        border-radius: 18px;
+        transform: rotate(-10deg);
+      }
+      .alert-title {
+        font-size: 0.92rem;
+        text-transform: uppercase;
+        color: var(--overlay-title-color);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      .alert-name {
+        margin-top: 8px;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        font-weight: 900;
+        color: var(--overlay-name-color);
+      }
+      .alert-amount {
+        font-size: clamp(1.6rem, 3vw, 2.45rem);
+        color: var(--overlay-amount-color);
+        font-weight: 900;
+      }
+      .alert-message {
+        margin-top: 12px;
+        line-height: 1.45;
+        color: var(--overlay-message-color);
+        font-size: 1.02rem;
+        max-width: 56ch;
+        word-break: break-word;
+      }
+      .preview-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        padding: 7px 12px;
+        background: var(--overlay-accent);
+        color: #fff;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      @keyframes alert-rise {
+        from { opacity: 0; transform: translateY(16px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes alert-pop {
+        from { opacity: 0; transform: scale(0.88); }
+        70% { opacity: 1; transform: scale(1.03); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes alert-slide-left {
+        from { opacity: 0; transform: translateX(48px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes alert-flip {
+        from { opacity: 0; transform: rotateX(-28deg) translateY(18px); }
+        to { opacity: 1; transform: rotateX(0) translateY(0); }
+      }
+      @media (max-width: 760px) {
+        .alert-card.is-visible { grid-template-columns: 1fr; }
+        .gif-stack { width: 180px; margin: 0 auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay-root widget-shell">
+      <section class="overlay-card alert-card style-ember" id="alert-card" data-animation="rise">
+        <div class="accent-line"></div>
+        <div class="preview-badge" id="preview-badge">Preview</div>
+        <div class="gif-stack">
+          <div class="gif-card primary"><img id="alert-gif-main" alt=""></div>
+          <div class="gif-card secondary-a"><img id="alert-gif-side-a" alt=""></div>
+          <div class="gif-card secondary-b"><img id="alert-gif-side-b" alt=""></div>
+        </div>
+        <div>
+          <div class="alert-title" id="alert-title">Жаңа донат</div>
+          <div class="alert-name" id="alert-name">Donor</div>
+          <div class="alert-amount" id="alert-amount">0 ₸</div>
+          <div class="alert-message" id="alert-message"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="/common.js"></script>
+    <script src="/widget.js"></script>
+  </body>
+</html>

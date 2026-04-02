@@ -1,0 +1,101 @@
+:root {
+  --overlay-accent: #ff5631;
+  --overlay-accent-soft: #ff8a6f;
+  --overlay-text: #ffffff;
+  --overlay-bg: rgba(16, 16, 16, 0.92);
+  --overlay-muted: rgba(255, 255, 255, 0.72);
+  --overlay-border: rgba(255, 255, 255, 0.08);
+  --overlay-font: "Segoe UI Variable Text", "Segoe UI", "Bahnschrift", sans-serif;
+  --overlay-title-color: var(--overlay-muted);
+  --overlay-name-color: var(--overlay-text);
+  --overlay-amount-color: var(--overlay-accent);
+  --overlay-message-color: var(--overlay-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+  background: transparent;
+  font-family: "Segoe UI Variable Text", "Segoe UI", "Bahnschrift", sans-serif;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--overlay-font);
+}
+
+.overlay-root {
+  width: 100%;
+  height: 100%;
+}
+
+.overlay-card {
+  background: var(--overlay-bg);
+  color: var(--overlay-text);
+  border-radius: 26px;
+  border: 2px solid var(--overlay-border);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.45);
+}
+
+.style-classic,
+.style-gold,
+.style-ember {
+  --overlay-accent: #ffbc2e;
+  --overlay-accent-soft: #ffe88d;
+  --overlay-bg: linear-gradient(135deg, rgba(31, 22, 10, 0.97), rgba(55, 41, 16, 0.94));
+}
+
+.style-gold {
+  --overlay-accent: #ffbc2e;
+  --overlay-accent-soft: #ffe88d;
+}
+
+.style-ember {
+  --overlay-accent: #ff5631;
+  --overlay-accent-soft: #ff8a6f;
+}
+
+.style-pubg {
+  --overlay-accent: #fff512;
+  --overlay-accent-soft: #de8d00;
+  --overlay-bg: linear-gradient(135deg, rgba(22, 22, 18, 0.97), rgba(47, 43, 31, 0.95));
+}
+
+.style-cyberpunk,
+.style-cyber {
+  --overlay-accent: #45f5ff;
+  --overlay-accent-soft: #ff4fd8;
+  --overlay-bg: linear-gradient(135deg, rgba(8, 15, 30, 0.95), rgba(29, 8, 34, 0.95));
+}
+
+.style-pink {
+  --overlay-accent: #ff5ea8;
+  --overlay-accent-soft: #ffc6e0;
+  --overlay-bg: linear-gradient(135deg, rgba(59, 24, 41, 0.95), rgba(117, 44, 86, 0.92));
+}
+
+.style-glass {
+  --overlay-accent: #ffffff;
+  --overlay-accent-soft: #cfd8e3;
+  --overlay-bg: rgba(23, 26, 31, 0.54);
+}
+
+.style-classic .accent-line,
+.style-pubg .accent-line,
+.style-cyberpunk .accent-line,
+.style-pink .accent-line,
+.style-ember .accent-line,
+.style-gold .accent-line,
+.style-cyber .accent-line,
+.style-glass .accent-line {
+  background: linear-gradient(90deg, var(--overlay-accent), var(--overlay-accent-soft));
+}
