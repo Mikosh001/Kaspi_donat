@@ -139,6 +139,11 @@ git push -u origin main
 Қадамдар:
 
 1. Алдымен Python backend-ті Render/Railway/VPS-қа шығарыңыз.
+   - Start command: `python run_web.py`
+   - Міндетті env:
+     - `KAZ_ALERTS_WEB_HOST=0.0.0.0`
+     - `KAZ_ALERTS_PUBLIC_BASE_URL=https://your-domain.com` (немесе backend домені)
+     - `KAZ_ALERTS_DATABASE_URL=...` (production database)
 2. Vercel-де осы GitHub репоны импорттаңыз.
 3. `Root Directory` ретінде `web` таңдаңыз.
 4. `web/vercel.json` ішіндегі мына жолды өз backend URL-ыңызға ауыстырыңыз:
