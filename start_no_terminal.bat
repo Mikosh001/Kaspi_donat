@@ -2,6 +2,10 @@
 setlocal
 cd /d "%~dp0"
 
+if exist "local.env.bat" (
+  call "local.env.bat"
+)
+
 if exist ".venv\Scripts\pythonw.exe" (
   start "" ".venv\Scripts\pythonw.exe" "run.py"
   exit /b 0

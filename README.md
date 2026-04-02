@@ -68,6 +68,12 @@ python run.py
 
 Desktop UI-да дәл сол `Streamer ID` енгізіңіз.
 
+Терминал қолданбаймын десеңіз:
+
+1. `local.env.example.bat` файлын `local.env.bat` деп көшіріңіз
+2. Ішіне өз `KAZ_ALERTS_API_URL` және `KAZ_ALERTS_API_KEY` мәндерін жазыңыз
+3. Кейін тек `start_no_terminal.bat` арқылы іске қосыңыз
+
 Сонда әр донат:
 - `streamer_id` бойынша сақталады
 - `device_id` бірге жіберіледі
@@ -198,8 +204,15 @@ Production-та мына ережені ұстаныңыз:
 
 ### Локалда (Windows)
 
-1. `start_no_terminal.bat` файлын екі рет басыңыз.
-2. Скрипт `pythonw` арқылы `run.py` іске қосады, терминал шықпайды.
+1. Бір рет `local.env.example.bat` -> `local.env.bat` деп көшіріңіз.
+2. `local.env.bat` ішінде мынаны толтырыңыз:
+  - `KAZ_ALERTS_STREAMER_ID=<сіздің streamer id>`
+  - `KAZ_ALERTS_AUTOSTART=1`
+  - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
+  - `KAZ_ALERTS_API_KEY=<сіздің token>`
+3. `start_no_terminal.bat` файлын екі рет басыңыз.
+4. Скрипт `pythonw` арқылы `run.py` іске қосады, терминал шықпайды.
+5. Программа Streamer ID-ді есіне сақтайды, келесі жолы қайта жазу міндетті емес.
 
 Автоқосу керек болса:
 

@@ -31,6 +31,8 @@ DATABASE_URL = os.getenv("KAZ_ALERTS_DATABASE_URL", f"sqlite:///{DB_PATH}")
 SITE_API_URL = os.getenv("KAZ_ALERTS_API_URL", "")
 SITE_API_KEY = os.getenv("KAZ_ALERTS_API_KEY", "")
 PUBLIC_BASE_URL = os.getenv("KAZ_ALERTS_PUBLIC_BASE_URL", "").strip().rstrip("/")
+DEFAULT_STREAMER_ID = os.getenv("KAZ_ALERTS_STREAMER_ID", "").strip()
+AUTO_START_LISTENER = _read_bool_env("KAZ_ALERTS_AUTOSTART", default=False)
 
 PHONE_LINK_TITLES = [
     "Связь с телефоном",

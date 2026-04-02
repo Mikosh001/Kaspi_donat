@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import webbrowser
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QSettings, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.config import APP_NAME, WEB_HOST, WEB_PORT
+from app.config import APP_NAME, AUTO_START_LISTENER, DEFAULT_STREAMER_ID, WEB_HOST, WEB_PORT
 from app.device_identity import get_device_id
 from app.db import get_recent_history, init_db, normalize_streamer_id
 from app.service import DonationService
@@ -29,6 +29,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle(APP_NAME)
         self.resize(920, 760)
+        self.local_settings = QSettings("KazAlerts", "DesktopApp")
         self.device_id = get_device_id()
         self.service = DonationService(
             streamer_id_getter=self.get_streamer_id,
@@ -44,6 +45,9 @@ class MainWindow(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.flush_ui_queue)
         self.timer.start(250)
+
+        if AUTO_START_LISTENER and self.get_scoped_streamer_id():
+            QTimer.singleShot(350, self.toggle_service)
 
     def build_ui(self):
         root = QVBoxLayout(self)
@@ -76,6 +80,10 @@ class MainWindow(QWidget):
         row.addWidget(QLabel("Streamer ID:"))
         self.id_input = QLineEdit()
         self.id_input.setPlaceholderText("Мысалы: 2546")
+        saved_streamer_id = str(self.local_settings.value("streamer_id", "", type=str) or "").strip()
+        initial_streamer_id = DEFAULT_STREAMER_ID or saved_streamer_id
+        if initial_streamer_id:
+            self.id_input.setText(initial_streamer_id)
         row.addWidget(self.id_input)
 
         self.start_btn = QPushButton("Бастау")
@@ -101,7 +109,7 @@ class MainWindow(QWidget):
         links_row.addWidget(self.open_stats_btn)
         root.addLayout(links_row)
 
-        self.id_input.textChanged.connect(self.refresh_scoped_links)
+        self.id_input.textChanged.connect(self.on_streamer_id_changed)
         self.refresh_scoped_links()
 
         self.status_label = QLabel("Статус: тоқтап тұр")
@@ -123,6 +131,10 @@ class MainWindow(QWidget):
 
     def get_streamer_id(self):
         return self.id_input.text().strip()
+
+    def on_streamer_id_changed(self, _text=""):
+        self.local_settings.setValue("streamer_id", self.get_streamer_id())
+        self.refresh_scoped_links()
 
     def get_scoped_streamer_id(self):
         return normalize_streamer_id(self.get_streamer_id())

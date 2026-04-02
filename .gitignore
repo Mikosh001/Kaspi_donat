@@ -29,3 +29,6 @@ data/overlay_settings.json
 
 # Logs
 *.log
+
+# Local launch overrides (contains private tokens)
+local.env.bat
