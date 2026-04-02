@@ -163,6 +163,20 @@ git push -u origin main
 5. Deploy жасаңыз.
 6. Vercel Project Settings -> Domains арқылы өз доменіңізді қосыңыз.
 
+Егер Vercel мына қатені берсе:
+`No python entrypoint found...`
+
+Жылдам шешім:
+
+1. Project Settings -> General -> Root Directory мәнін `web` қылыңыз.
+2. Redeploy жасаңыз.
+
+Балама шешім (Root Directory-ді өзгертпей):
+
+1. Репо root-та `vercel.json` бар, ол static build-ті мәжбүрлейді.
+2. Осы файлдағы `/api/:path*` destination-ды өз backend URL-ыңызға ауыстырыңыз.
+3. Redeploy жасаңыз.
+
 Domain үшін `KAZ_ALERTS_PUBLIC_BASE_URL` орнатыңыз:
 
 ```powershell
