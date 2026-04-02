@@ -3,6 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/", "destination": "/admin.html" },
+    { "source": "/connect", "destination": "/connect.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/widget", "destination": "/widget.html" },
     { "source": "/widgetyt", "destination": "/widgetyt.html" },
@@ -15,6 +16,7 @@
     { "source": "/s/:streamer_id/widgetyt", "destination": "/widgetyt.html" },
     { "source": "/s/:streamer_id/stats", "destination": "/stats.html" },
     { "source": "/s/:streamer_id/goal", "destination": "/goal.html" },
+    { "source": "/s/:streamer_id/connect", "destination": "/connect.html" },
 
     { "source": "/api/:path*", "destination": "https://replace-me-backend-domain.example/api/:path*" }
   ]

@@ -14,11 +14,20 @@ class Publisher:
         if self.log_callback:
             self.log_callback(text)
 
-    def can_publish(self) -> bool:
-        return bool(SITE_API_URL)
+    def can_publish(self, api_url: str | None = None) -> bool:
+        target = (api_url or SITE_API_URL or "").strip()
+        return bool(target)
 
-    def publish(self, streamer_id: str, parsed, device_id: str | None = None, streamer_token: str | None = None):
-        if not self.can_publish():
+    def publish(
+        self,
+        streamer_id: str,
+        parsed,
+        device_id: str | None = None,
+        streamer_token: str | None = None,
+        api_url: str | None = None,
+    ):
+        target_api_url = (api_url or SITE_API_URL or "").strip()
+        if not self.can_publish(target_api_url):
             self.log("[publisher] API URL орнатылмаған, тек локальды сақталды")
             return True
 
@@ -43,7 +52,7 @@ class Publisher:
             headers["X-Device-ID"] = device_id
 
         response = requests.post(
-            SITE_API_URL,
+            target_api_url,
             json=payload.model_dump(),
             headers=headers,
             timeout=8,

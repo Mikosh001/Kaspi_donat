@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 import webbrowser
 
 from PySide6.QtCore import QSettings, QTimer
@@ -17,7 +18,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.config import APP_NAME, AUTO_START_LISTENER, DEFAULT_STREAMER_ID, WEB_HOST, WEB_PORT
+from app.cloud_auth import CloudConnectClient, DeviceAuthStore
+from app.config import (
+    APP_NAME,
+    AUTO_START_LISTENER,
+    CONNECT_API_URL,
+    DEFAULT_STREAMER_ID,
+    SITE_API_URL,
+    WEB_HOST,
+    WEB_PORT,
+)
 from app.device_identity import get_device_id
 from app.db import get_recent_history, init_db, normalize_streamer_id
 from app.service import DonationService
@@ -31,11 +41,16 @@ class MainWindow(QWidget):
         self.resize(920, 760)
         self.local_settings = QSettings("KazAlerts", "DesktopApp")
         self.device_id = get_device_id()
+        self.device_auth_store = DeviceAuthStore()
+        self.device_auth = self.device_auth_store.load()
+        self.cloud_connect_client = CloudConnectClient()
         self.service = DonationService(
             streamer_id_getter=self.get_streamer_id,
             log_callback=self.threadsafe_log,
             event_callback=self.on_donation,
             device_id_getter=self.get_device_id,
+            streamer_token_getter=self.get_streamer_token,
+            api_url_getter=self.get_publish_api_url,
         )
         self._pending_logs = []
         self._pending_events = []
@@ -76,12 +91,38 @@ class MainWindow(QWidget):
         device_info.setStyleSheet("color: #666; font-size: 12px;")
         root.addWidget(device_info)
 
+        cloud_info = QLabel(
+            f"Cloud connect URL: {CONNECT_API_URL or '(орнатылмаған)'}"
+        )
+        cloud_info.setStyleSheet("color: #455a64; font-size: 11px;")
+        root.addWidget(cloud_info)
+
+        cloud_row = QHBoxLayout()
+        cloud_row.addWidget(QLabel("One-time code:"))
+        self.cloud_code_input = QLineEdit()
+        self.cloud_code_input.setPlaceholderText("Мысалы: AB12CD34")
+        cloud_row.addWidget(self.cloud_code_input)
+
+        self.cloud_connect_btn = QPushButton("Cloud-қа қосу")
+        self.cloud_connect_btn.clicked.connect(self.connect_cloud_device)
+        cloud_row.addWidget(self.cloud_connect_btn)
+
+        self.cloud_disconnect_btn = QPushButton("Cloud ажырату")
+        self.cloud_disconnect_btn.clicked.connect(self.disconnect_cloud_device)
+        cloud_row.addWidget(self.cloud_disconnect_btn)
+        root.addLayout(cloud_row)
+
+        self.cloud_status_label = QLabel()
+        self.cloud_status_label.setStyleSheet("color: #37474f; font-size: 12px; font-weight: 600;")
+        root.addWidget(self.cloud_status_label)
+
         row = QHBoxLayout()
         row.addWidget(QLabel("Streamer ID:"))
         self.id_input = QLineEdit()
         self.id_input.setPlaceholderText("Мысалы: 2546")
         saved_streamer_id = str(self.local_settings.value("streamer_id", "", type=str) or "").strip()
-        initial_streamer_id = DEFAULT_STREAMER_ID or saved_streamer_id
+        linked_streamer_id = normalize_streamer_id(self.device_auth.get("streamer_id") or "")
+        initial_streamer_id = DEFAULT_STREAMER_ID or linked_streamer_id or saved_streamer_id
         if initial_streamer_id:
             self.id_input.setText(initial_streamer_id)
         row.addWidget(self.id_input)
@@ -110,6 +151,7 @@ class MainWindow(QWidget):
         root.addLayout(links_row)
 
         self.id_input.textChanged.connect(self.on_streamer_id_changed)
+        self.refresh_cloud_status()
         self.refresh_scoped_links()
 
         self.status_label = QLabel("Статус: тоқтап тұр")
@@ -132,8 +174,16 @@ class MainWindow(QWidget):
     def get_streamer_id(self):
         return self.id_input.text().strip()
 
+    def get_streamer_token(self):
+        return str(self.device_auth.get("token") or "").strip()
+
+    def get_publish_api_url(self):
+        from_cloud = str(self.device_auth.get("ingest_url") or "").strip()
+        return from_cloud or SITE_API_URL
+
     def on_streamer_id_changed(self, _text=""):
         self.local_settings.setValue("streamer_id", self.get_streamer_id())
+        self.refresh_cloud_status()
         self.refresh_scoped_links()
 
     def get_scoped_streamer_id(self):
@@ -162,6 +212,57 @@ class MainWindow(QWidget):
         self.streamer_web_info.setText(
             f"Streamer web ({scoped_streamer_id}): Admin {admin_url} | Widget {widget_url}"
         )
+
+    def refresh_cloud_status(self):
+        linked_streamer_id = normalize_streamer_id(self.device_auth.get("streamer_id") or "")
+        has_token = bool(str(self.device_auth.get("token") or "").strip())
+        ingest_url = str(self.device_auth.get("ingest_url") or "").strip()
+        if not linked_streamer_id or not has_token:
+            self.cloud_status_label.setText(
+                "Cloud: қосылмаған. One-time code енгізіп Cloud-қа қосыңыз."
+            )
+            return
+
+        scope_status = "OK" if linked_streamer_id == self.get_scoped_streamer_id() else "Streamer ID сәйкес емес"
+        self.cloud_status_label.setText(
+            f"Cloud: {linked_streamer_id} | token: бар | ingest: {ingest_url or '(env)'} | {scope_status}"
+        )
+
+    def connect_cloud_device(self):
+        if not self.cloud_connect_client.can_connect():
+            QMessageBox.warning(
+                self,
+                "Cloud connect",
+                "KAZ_ALERTS_CONNECT_URL орнатылмаған. local.env.bat ішінде connect URL жазыңыз.",
+            )
+            return
+
+        code = self.cloud_code_input.text().strip().upper()
+        if not code:
+            QMessageBox.warning(self, "Cloud connect", "Алдымен one-time code енгізіңіз")
+            return
+
+        try:
+            payload = self.cloud_connect_client.claim_device(
+                connect_code=code,
+                device_id=self.device_id,
+                device_name=socket.gethostname(),
+            )
+        except Exception as exc:
+            QMessageBox.warning(self, "Cloud connect", f"Қосылу қатесі: {exc}")
+            return
+
+        self.device_auth = self.device_auth_store.save(payload)
+        self.id_input.setText(payload.get("streamer_id", ""))
+        self.cloud_code_input.clear()
+        self.refresh_cloud_status()
+        self.log_box.append("[cloud] құрылғы Cloud профиліне сәтті байланыстырылды")
+
+    def disconnect_cloud_device(self):
+        self.device_auth_store.clear()
+        self.device_auth = {}
+        self.refresh_cloud_status()
+        self.log_box.append("[cloud] локальды cloud-auth дерегі өшірілді")
 
     def open_scoped_page(self, path: str):
         webbrowser.open(self.build_scoped_url(path), new=2)
@@ -216,7 +317,7 @@ class MainWindow(QWidget):
         self.table.setItem(row, 4, QTableWidgetItem(str(item.get("confidence", 0.0))))
 
     def load_history(self):
-        rows = get_recent_history(50)
+        rows = get_recent_history(50, streamer_id=self.get_scoped_streamer_id() or None)
         for row in reversed(rows):
             self.insert_row(
                 {

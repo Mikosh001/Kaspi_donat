@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="kk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kaz Alerts Cloud Connect</title>
+    <link rel="stylesheet" href="/theme.css">
+    <style>
+      .connect-shell { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
+      .connect-card { background: #fff; border: 1px solid #e7ddd0; border-radius: 20px; padding: 18px; }
+      .connect-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .connect-grid.single { grid-template-columns: 1fr; }
+      .status-box { padding: 12px; border-radius: 12px; background: #fff7f1; color: #a74129; border: 1px dashed rgba(255,86,49,.35); }
+      .code-box { font-size: 2rem; letter-spacing: .12em; font-weight: 900; }
+      @media (max-width: 860px) { .connect-grid { grid-template-columns: 1fr; } }
+    </style>
+    <script src="/firebase-config.js"></script>
+  </head>
+  <body>
+    <main class="connect-shell">
+      <section class="connect-card">
+        <h1>Kaz Alerts Cloud Connect</h1>
+        <p>Streamer аккаунт (Email/Password) арқылы бір реттік код алыңыз, сосын desktop app-қа енгізіңіз.</p>
+      </section>
+
+      <section class="connect-card">
+        <h2>1) Аккаунт</h2>
+        <div class="connect-grid">
+          <label><span>Email</span><input id="auth-email" type="email" placeholder="you@email.com"></label>
+          <label><span>Password</span><input id="auth-password" type="password" placeholder="Минимум 6 символ"></label>
+        </div>
+        <div class="button-row" style="margin-top:10px;">
+          <button class="btn btn-primary" id="auth-signup">Sign up</button>
+          <button class="btn btn-dark" id="auth-signin">Sign in</button>
+          <button class="btn btn-light" id="auth-signout">Sign out</button>
+        </div>
+      </section>
+
+      <section class="connect-card">
+        <h2>2) Streamer Profile + Code</h2>
+        <div class="connect-grid">
+          <label><span>Streamer ID</span><input id="streamer-id" type="text" placeholder="myslug"></label>
+          <label><span>Display Name</span><input id="display-name" type="text" placeholder="My Stream"></label>
+        </div>
+        <div class="button-row" style="margin-top:10px;">
+          <button class="btn btn-primary" id="create-code">One-time code жасау</button>
+        </div>
+        <div class="connect-grid single" style="margin-top:12px;">
+          <div>
+            <div class="tiny">Desktop app-қа енгізілетін код:</div>
+            <div class="code-box" id="connect-code">--------</div>
+          </div>
+          <div>
+            <div class="tiny">Код мерзімі:</div>
+            <div id="connect-expires">-</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="connect-card">
+        <div class="status-box" id="status-box">Firebase config толтырылмаған болса, web/firebase-config.js файлын жасаңыз.</div>
+      </section>
+    </main>
+
+    <script type="module" src="/connect.js"></script>
+  </body>
+</html>

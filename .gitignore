@@ -25,6 +25,7 @@ Thumbs.db
 data/app.db
 data/debug/
 data/device_id.txt
+data/device_auth.json
 data/overlay_settings.json
 
 # Logs
@@ -32,3 +33,7 @@ data/overlay_settings.json
 
 # Local launch overrides (contains private tokens)
 local.env.bat
+
+# Firebase local files
+firebase/.firebaserc
+firebase/functions/node_modules/

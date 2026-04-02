@@ -14,6 +14,17 @@ def _read_bool_env(name: str, default: bool = False) -> bool:
     value = os.getenv(name, "1" if default else "0").strip().lower()
     return value in {"1", "true", "yes", "on"}
 
+
+def _derive_connect_api_url(ingest_url: str) -> str:
+    value = (ingest_url or "").strip()
+    if not value:
+        return ""
+    if value.endswith("/cloud/ingest"):
+        return f"{value[:-len('/cloud/ingest')]}/cloud/claim-device"
+    if value.endswith("/ingest"):
+        return f"{value[:-len('/ingest')]}/claim-device"
+    return ""
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DEBUG_DIR = DATA_DIR / "debug"
@@ -25,11 +36,13 @@ WEB_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "app.db"
 WEB_SETTINGS_PATH = DATA_DIR / "overlay_settings.json"
 DEVICE_ID_PATH = DATA_DIR / "device_id.txt"
+DEVICE_AUTH_PATH = DATA_DIR / "device_auth.json"
 
 DATABASE_URL = os.getenv("KAZ_ALERTS_DATABASE_URL", f"sqlite:///{DB_PATH}")
 
 SITE_API_URL = os.getenv("KAZ_ALERTS_API_URL", "")
 SITE_API_KEY = os.getenv("KAZ_ALERTS_API_KEY", "")
+CONNECT_API_URL = os.getenv("KAZ_ALERTS_CONNECT_URL", "").strip() or _derive_connect_api_url(SITE_API_URL)
 PUBLIC_BASE_URL = os.getenv("KAZ_ALERTS_PUBLIC_BASE_URL", "").strip().rstrip("/")
 DEFAULT_STREAMER_ID = os.getenv("KAZ_ALERTS_STREAMER_ID", "").strip()
 AUTO_START_LISTENER = _read_bool_env("KAZ_ALERTS_AUTOSTART", default=False)

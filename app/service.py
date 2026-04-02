@@ -18,9 +18,19 @@ from app.publisher import Publisher
 
 
 class DonationService:
-    def __init__(self, streamer_id_getter, log_callback, event_callback, device_id_getter=None):
+    def __init__(
+        self,
+        streamer_id_getter,
+        log_callback,
+        event_callback,
+        device_id_getter=None,
+        streamer_token_getter=None,
+        api_url_getter=None,
+    ):
         self.streamer_id_getter = streamer_id_getter
         self.device_id_getter = device_id_getter or (lambda: "")
+        self.streamer_token_getter = streamer_token_getter or (lambda: "")
+        self.api_url_getter = api_url_getter or (lambda: "")
         self.log_callback = log_callback
         self.event_callback = event_callback
         self.capture = PhoneLinkCapture(log_callback=self.log)
@@ -146,7 +156,13 @@ class DonationService:
             return True
 
         try:
-            self.publisher.publish(streamer_id, parsed, device_id=device_id)
+            self.publisher.publish(
+                streamer_id,
+                parsed,
+                device_id=device_id,
+                streamer_token=(self.streamer_token_getter() or "").strip() or None,
+                api_url=(self.api_url_getter() or "").strip() or None,
+            )
             mark_published(row.id)
         except Exception as e:
             mark_publish_error(row.id, str(e))

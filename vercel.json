@@ -14,8 +14,10 @@
     { "source": "/s/:streamer_id/widgetyt", "destination": "/widgetyt" },
     { "source": "/s/:streamer_id/stats", "destination": "/stats" },
     { "source": "/s/:streamer_id/goal", "destination": "/goal" },
+    { "source": "/s/:streamer_id/connect", "destination": "/connect" },
 
     { "source": "/", "destination": "/admin" },
+    { "source": "/connect", "destination": "/connect" },
     { "source": "/admin", "destination": "/admin" },
     { "source": "/widget", "destination": "/widget" },
     { "source": "/widgetyt", "destination": "/widgetyt" },

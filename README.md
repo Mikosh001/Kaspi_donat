@@ -68,6 +68,14 @@ python run.py
 
 Desktop UI-да дәл сол `Streamer ID` енгізіңіз.
 
+Email/Password + one-time code режимі үшін (ұсынылатын жол):
+
+1. Алдымен web-тегі `/connect` бетін ашыңыз
+2. Firebase Auth арқылы Sign up/Sign in жасаңыз
+3. `One-time code жасау` батырмасын басыңыз
+4. Desktop app-та сол code-ты `Cloud-қа қосу` арқылы енгізіңіз
+5. Осыдан кейін token локал сақталады, күнде қайта енгізу керек емес
+
 Терминал қолданбаймын десеңіз:
 
 1. `local.env.example.bat` файлын `local.env.bat` деп көшіріңіз
@@ -79,12 +87,40 @@ Desktop UI-да дәл сол `Streamer ID` енгізіңіз.
 - `device_id` бірге жіберіледі
 - профильдің widget-іне түседі
 
+## Firebase-first режим (Email/Password + One-time Code)
+
+Бұл репода Firebase backend дайын күйде бар:
+
+- `firebase/functions/src/index.js` - Cloud Functions API
+- `firebase/firestore.rules` - қауіпсіздік ережелері
+- `firebase/firestore.indexes.json` - индекстер
+- `web/connect.html` - Email/Password + one-time code беті
+
+Артықшылығы:
+
+1. Әр стример өз Firebase аккаунтымен кіреді.
+2. Desktop app бір рет code арқылы байланысады.
+3. Донат analytics қайта-қайта есептелмейді, ingest кезінде дайын summary жаңарады.
+4. Көп стример толық бөлек сақталады (streamer_id scope).
+
+Firebase deploy қысқаша:
+
+```powershell
+cd firebase\functions
+npm install
+cd ..
+firebase deploy --only functions:api,firestore:rules,firestore:indexes
+```
+
+Толық нұсқаулық: `firebase/README.md`
+
 ## Негізгі URL-дар
 
 ### Локал (single mode)
 
 ```text
 http://127.0.0.1:3400/
+http://127.0.0.1:3400/connect
 http://127.0.0.1:3400/widget
 http://127.0.0.1:3400/widgetyt
 http://127.0.0.1:3400/stats?board=top_day
@@ -99,6 +135,7 @@ http://127.0.0.1:3400/api/analytics/summary
 
 ```text
 http://127.0.0.1:3400/s/<streamer_id>/
+http://127.0.0.1:3400/s/<streamer_id>/connect
 http://127.0.0.1:3400/s/<streamer_id>/widget
 http://127.0.0.1:3400/s/<streamer_id>/widgetyt
 http://127.0.0.1:3400/s/<streamer_id>/stats?board=top_day
@@ -114,6 +151,8 @@ http://127.0.0.1:3400/s/<streamer_id>/api/analytics/summary
 - `POST /api/cloud/rotate-token`
 - `POST /api/cloud/bind-device`
 - `POST /api/cloud/ingest`
+- `POST /api/cloud/create-connect-code`
+- `POST /api/cloud/claim-device`
 - `GET /api/cloud/profile?streamer_id=...`
 - `GET /api/cloud/settings?streamer_id=...`
 - `POST /api/cloud/settings?streamer_id=...`
@@ -222,11 +261,12 @@ Production-та мына ережені ұстаныңыз:
 2. `local.env.bat` ішінде мынаны толтырыңыз:
   - `KAZ_ALERTS_STREAMER_ID=<сіздің streamer id>`
   - `KAZ_ALERTS_AUTOSTART=1`
+  - `KAZ_ALERTS_CONNECT_URL=https://your-domain.com/api/cloud/claim-device`
   - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
-  - `KAZ_ALERTS_API_KEY=<сіздің token>`
+  - `KAZ_ALERTS_API_KEY=<міндетті емес, code flow қолдансаңыз автомат келеді>`
 3. `start_no_terminal.bat` файлын екі рет басыңыз.
 4. Скрипт `pythonw` арқылы `run.py` іске қосады, терминал шықпайды.
-5. Программа Streamer ID-ді есіне сақтайды, келесі жолы қайта жазу міндетті емес.
+5. Программа Streamer ID және cloud token-ды есіне сақтайды, келесі жолы қайта жазу міндетті емес.
 
 Автоқосу керек болса:
 

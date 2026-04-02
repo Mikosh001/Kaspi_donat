@@ -40,6 +40,7 @@ YOUTUBE_RE = re.compile(
 
 STATIC_ROUTES = {
     "/": "admin.html",
+    "/connect": "connect.html",
     "/widget": "widget.html",
     "/widgetyt": "widgetyt.html",
     "/stats": "stats.html",
