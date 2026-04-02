@@ -8,20 +8,18 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://replace-me-backend-domain.example/api/:path*" },
 
-    { "source": "/s/:streamer_id", "destination": "/web/admin.html" },
-    { "source": "/s/:streamer_id/", "destination": "/web/admin.html" },
-    { "source": "/s/:streamer_id/widget", "destination": "/web/widget.html" },
-    { "source": "/s/:streamer_id/widgetyt", "destination": "/web/widgetyt.html" },
-    { "source": "/s/:streamer_id/stats", "destination": "/web/stats.html" },
-    { "source": "/s/:streamer_id/goal", "destination": "/web/goal.html" },
+    { "source": "/s/:streamer_id", "destination": "/admin" },
+    { "source": "/s/:streamer_id/", "destination": "/admin" },
+    { "source": "/s/:streamer_id/widget", "destination": "/widget" },
+    { "source": "/s/:streamer_id/widgetyt", "destination": "/widgetyt" },
+    { "source": "/s/:streamer_id/stats", "destination": "/stats" },
+    { "source": "/s/:streamer_id/goal", "destination": "/goal" },
 
-    { "source": "/", "destination": "/web/admin.html" },
-    { "source": "/admin", "destination": "/web/admin.html" },
-    { "source": "/widget", "destination": "/web/widget.html" },
-    { "source": "/widgetyt", "destination": "/web/widgetyt.html" },
-    { "source": "/stats", "destination": "/web/stats.html" },
-    { "source": "/goal", "destination": "/web/goal.html" },
-
-    { "source": "/:asset", "destination": "/web/:asset" }
+    { "source": "/", "destination": "/admin" },
+    { "source": "/admin", "destination": "/admin" },
+    { "source": "/widget", "destination": "/widget" },
+    { "source": "/widgetyt", "destination": "/widgetyt" },
+    { "source": "/stats", "destination": "/stats" },
+    { "source": "/goal", "destination": "/goal" }
   ]
 }
