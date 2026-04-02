@@ -140,6 +140,7 @@ git push -u origin main
 
 1. Алдымен Python backend-ті Render/Railway/VPS-қа шығарыңыз.
    - Start command: `python run_web.py`
+  - Репода `Procfile` бар (`web: python run_web.py`)
    - Міндетті env:
      - `KAZ_ALERTS_WEB_HOST=0.0.0.0`
      - `KAZ_ALERTS_PUBLIC_BASE_URL=https://your-domain.com` (немесе backend домені)
