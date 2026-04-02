@@ -6,7 +6,7 @@ function resolveStreamerContext() {
   const pathParts = window.location.pathname.split("/").filter(Boolean);
   const pathStreamerId = pathParts[0] === "s" ? pathParts[1] || "" : "";
   const queryStreamerId = getQueryParam("streamer_id", "");
-  const streamerId = String(queryStreamerId || pathStreamerId || "").trim().toLowerCase();
+  const streamerId = String(pathStreamerId || queryStreamerId || "").trim().toLowerCase();
 
   let token = "";
   const queryToken = getQueryParam("token", "").trim();

@@ -143,6 +143,7 @@ git push -u origin main
   - Репода `Procfile` бар (`web: python run_web.py`)
    - Міндетті env:
      - `KAZ_ALERTS_WEB_HOST=0.0.0.0`
+  - `KAZ_ALERTS_ENFORCE_STREAMER_SCOPE=1`
      - `KAZ_ALERTS_PUBLIC_BASE_URL=https://your-domain.com` (немесе backend домені)
      - `KAZ_ALERTS_DATABASE_URL=...` (production database)
 2. Vercel-де осы GitHub репоны импорттаңыз.
@@ -175,6 +176,23 @@ $env:KAZ_ALERTS_PUBLIC_BASE_URL="https://your-domain.com"
 5. Backend `streamer_id` бойынша нақты профильдің settings/donation/analytics дерегін қайтарады.
 
 Нәтиже: бір доменде көп streamer қатар жұмыс істейді, әрқайсысының өз профилі, баптауы, аналитикасы бөлек.
+
+## Көп стример толық изоляция (бірінің донаты біріне кетпейді)
+
+Production-та мына ережені ұстаныңыз:
+
+1. Әр стример тек өз scoped URL-ын қолданады:
+  - `/s/<streamer_id>/`
+  - `/s/<streamer_id>/widget`
+  - `/s/<streamer_id>/stats?board=top_day`
+2. Backend env-та `KAZ_ALERTS_ENFORCE_STREAMER_SCOPE=1` міндетті.
+3. Әр стример admin-да бір рет `Register` жасайды және жеке token алады.
+4. Әр стример desktop reader-інде өз token-ын ғана қолданады:
+  - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
+  - `KAZ_ALERTS_API_KEY=<осы стримердің token-ы>`
+5. Root URL (`/widget`, `/stats`) емес, тек scoped URL пайдаланыңыз.
+
+Осы конфигурацияда API сұраулар streamer scope және token арқылы тексеріледі, сондықтан дерек араласпайды.
 
 ## Терминалсыз іске қосу
 

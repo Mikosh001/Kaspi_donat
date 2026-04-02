@@ -9,6 +9,11 @@ def _read_int_env(name: str, default: int) -> int:
     except (TypeError, ValueError):
         return default
 
+
+def _read_bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name, "1" if default else "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DEBUG_DIR = DATA_DIR / "debug"
@@ -86,5 +91,6 @@ MAX_MESSAGE_LENGTH = 220
 
 WEB_HOST = os.getenv("KAZ_ALERTS_WEB_HOST", "127.0.0.1").strip() or "127.0.0.1"
 WEB_PORT = _read_int_env("PORT", _read_int_env("KAZ_ALERTS_WEB_PORT", 3400))
+ENFORCE_STREAMER_SCOPE = _read_bool_env("KAZ_ALERTS_ENFORCE_STREAMER_SCOPE", default=False)
 
 APP_NAME = "Kaz Alerts MVP"

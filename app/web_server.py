@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from app.config import PUBLIC_BASE_URL, WEB_DIR, WEB_HOST, WEB_PORT
+from app.config import ENFORCE_STREAMER_SCOPE, PUBLIC_BASE_URL, WEB_DIR, WEB_HOST, WEB_PORT
 from app.db import (
     bind_device,
     create_or_get_streamer_account,
@@ -83,21 +83,22 @@ def find_alert_tier(amount: int, settings: dict) -> dict:
 
 def resolve_donation_payload(row, settings: dict) -> dict:
     base = donation_to_dict(row) if not isinstance(row, dict) else row
+    safe_message = str(base.get("message", "") or "")
     display_name = apply_alias(base.get("donor_name", ""), settings)
     youtube_url = extract_youtube_url(
-        f"{base.get('message', '')}\n{base.get('raw_text', '')}"
+        f"{safe_message}\n{base.get('raw_text', '')}"
     )
     tier = find_alert_tier(int(base.get("amount", 0) or 0), settings)
-    music_request_text = strip_youtube_urls(base.get("message", "")).strip() or "Music request"
+    music_request_text = strip_youtube_urls(safe_message).strip() or "Music request"
 
     tts_template = str(tier.get("tts_text", "{donor_name} {amount} теңге. {message}"))
     tts_text = (
         tts_template.replace("{donor_name}", display_name)
         .replace("{amount}", str(base.get("amount", 0)))
-        .replace("{message}", base.get("message", "") or "")
+        .replace("{message}", safe_message)
     )
-    if base.get("message") and "{message}" not in tts_template and base.get("message") not in tts_text:
-        tts_text = f"{tts_text}. {base.get('message')}"
+    if safe_message and "{message}" not in tts_template and safe_message not in tts_text:
+        tts_text = f"{tts_text}. {safe_message}"
 
     return {
         **base,
@@ -278,7 +279,7 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
-    def _send_json(self, payload: dict | list, status: int = 200):
+    def _send_json(self, payload: dict | list | None, status: int = 200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -333,24 +334,62 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
         return verify_streamer_token(scoped_streamer_id, token)
 
     def _resolve_scope(self, path: str, query: dict) -> tuple[str, str]:
-        scoped_streamer_id = normalize_streamer_id((query.get("streamer_id", [""])[0] or "").strip())
+        query_streamer_id = normalize_streamer_id((query.get("streamer_id", [""])[0] or "").strip())
         header_streamer_id = normalize_streamer_id(self.headers.get("X-Streamer-ID", ""))
+        path_streamer_id = ""
 
         segments = [segment for segment in path.split("/") if segment]
         scoped_path = path
         if len(segments) >= 2 and segments[0] == "s":
             candidate = normalize_streamer_id(segments[1])
-            if candidate and not scoped_streamer_id:
-                scoped_streamer_id = candidate
+            if candidate:
+                path_streamer_id = candidate
             remainder = segments[2:]
             scoped_path = f"/{'/'.join(remainder)}" if remainder else "/"
 
-        if not scoped_streamer_id and header_streamer_id:
-            scoped_streamer_id = header_streamer_id
+        scoped_streamer_id = path_streamer_id or query_streamer_id or header_streamer_id
 
         return scoped_path, scoped_streamer_id
 
+    def _require_scope_for_get(self, path: str, streamer_id: str) -> bool:
+        if not ENFORCE_STREAMER_SCOPE:
+            return True
+        if path == "/api/health":
+            return True
+        if streamer_id:
+            return True
+        self._send_error_json(HTTPStatus.BAD_REQUEST, "streamer scope required")
+        return False
+
+    def _require_scope_for_post(self, path: str, streamer_id: str) -> bool:
+        if not ENFORCE_STREAMER_SCOPE:
+            return True
+        if streamer_id:
+            return True
+
+        # Cloud write endpoints can provide streamer_id in request body.
+        if path in {
+            "/api/cloud/register",
+            "/api/cloud/rotate-token",
+            "/api/cloud/bind-device",
+            "/api/cloud/ingest",
+        }:
+            return True
+
+        self._send_error_json(HTTPStatus.BAD_REQUEST, "streamer scope required")
+        return False
+
     def _handle_get_api(self, path: str, query: dict, streamer_id: str):
+        if path == "/api/health":
+            self._send_json(
+                {
+                    "ok": True,
+                    "scope_required": ENFORCE_STREAMER_SCOPE,
+                    "streamer_id": streamer_id,
+                }
+            )
+            return
+
         settings = self.settings_store.load(streamer_id=streamer_id)
 
         if path == "/api/state":
@@ -536,6 +575,11 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
                 self._send_error_json(HTTPStatus.BAD_REQUEST, "streamer_id required")
                 return
 
+            existing_account = get_streamer_account(requested_streamer_id)
+            if existing_account and not self._is_token_authorized(requested_streamer_id):
+                self._send_error_json(HTTPStatus.CONFLICT, "streamer already registered")
+                return
+
             account = create_or_get_streamer_account(
                 requested_streamer_id,
                 str(payload.get("display_name", "")).strip(),
@@ -553,7 +597,7 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
                     "account": account,
                     "profile": build_streamer_profile_payload(requested_streamer_id),
                 },
-                status=201,
+                status=HTTPStatus.CREATED if not existing_account else HTTPStatus.OK,
             )
             return
 
@@ -655,6 +699,8 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
         path, streamer_id = self._resolve_scope(parsed.path, query)
 
         if path.startswith("/api/"):
+            if not self._require_scope_for_get(path, streamer_id):
+                return
             self._handle_get_api(path, query, streamer_id)
             return
 
@@ -675,6 +721,8 @@ class OverlayRequestHandler(BaseHTTPRequestHandler):
         path, streamer_id = self._resolve_scope(parsed.path, query)
 
         if path.startswith("/api/"):
+            if not self._require_scope_for_post(path, streamer_id):
+                return
             self._handle_post_api(path, streamer_id)
             return
 
