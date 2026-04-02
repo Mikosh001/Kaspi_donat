@@ -6,7 +6,7 @@
     { "src": "web/**", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://replace-me-backend-domain.example/api/:path*" },
+    { "source": "/api/:path*", "destination": "https://us-central1-kaspi-donate.cloudfunctions.net/api/:path*" },
 
     { "source": "/s/:streamer_id", "destination": "/admin" },
     { "source": "/s/:streamer_id/", "destination": "/admin" },

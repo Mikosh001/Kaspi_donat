@@ -35,5 +35,7 @@ data/overlay_settings.json
 local.env.bat
 
 # Firebase local files
+.firebaserc
 firebase/.firebaserc
 firebase/functions/node_modules/
+firebase-debug.log

@@ -108,8 +108,21 @@ Firebase deploy қысқаша:
 ```powershell
 cd firebase\functions
 npm install
-cd ..
+cd ..\..
+firebase login --no-localhost
 firebase deploy --only functions:api,firestore:rules,firestore:indexes
+```
+
+Егер `firebase` командасы табылмаса:
+
+```powershell
+npm install -g firebase-tools
+```
+
+Deploy сәтті болғанын тексеру:
+
+```text
+https://us-central1-kaspi-donate.cloudfunctions.net/api/health
 ```
 
 Толық нұсқаулық: `firebase/README.md`

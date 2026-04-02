@@ -18,6 +18,6 @@
     { "source": "/s/:streamer_id/goal", "destination": "/goal.html" },
     { "source": "/s/:streamer_id/connect", "destination": "/connect.html" },
 
-    { "source": "/api/:path*", "destination": "https://replace-me-backend-domain.example/api/:path*" }
+    { "source": "/api/:path*", "destination": "https://us-central1-kaspi-donate.cloudfunctions.net/api/:path*" }
   ]
 }
