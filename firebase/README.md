@@ -33,7 +33,16 @@ npm install
 
 ```bash
 cd ..
-firebase deploy --only functions:api,firestore:rules,firestore:indexes
+firebase deploy --only functions:default:api,firestore:rules,firestore:indexes
+```
+
+Important:
+
+- Cloud Functions deployment requires Firebase Blaze plan.
+- If your project is still on Spark, deploy Firestore only for now:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 ## API Endpoints

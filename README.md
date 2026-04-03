@@ -110,13 +110,21 @@ cd firebase\functions
 npm install
 cd ..\..
 firebase login --no-localhost
-firebase deploy --only functions:api,firestore:rules,firestore:indexes
+firebase deploy --only functions:default:api,firestore:rules,firestore:indexes
 ```
 
 Егер `firebase` командасы табылмаса:
 
 ```powershell
 npm install -g firebase-tools
+```
+
+Ескерту: Firebase Functions deploy үшін жоба `Blaze` (pay-as-you-go) тарифінде болуы керек.
+
+Егер қазір Spark тарифінде болсаңыз, уақытша тек Firestore бөлігін жіберуге болады:
+
+```powershell
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 Deploy сәтті болғанын тексеру:
