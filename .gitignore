@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .Python
 .venv/
+.venv-build/
 venv/
 env/
 pip-wheel-metadata/
@@ -30,6 +31,11 @@ data/overlay_settings.json
 
 # Logs
 *.log
+
+# Desktop build artifacts
+build/
+dist/
+*.spec
 
 # Local launch overrides (contains private tokens)
 local.env.bat

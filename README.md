@@ -22,6 +22,37 @@ cd kaz_alerts
 pip install -r requirements.txt
 ```
 
+## Desktop app ретінде скачать ету
+
+Python орнатпай қолданушылар үшін дайын Windows zip жасауға болады.
+
+### Вариант A: GitHub Actions арқылы дайын zip алу
+
+1. GitHub repo -> `Actions` -> `Build Desktop App` workflow ашыңыз
+2. `Run workflow` басыңыз
+3. Build біткен соң `Artifacts` ішінен `KazAlerts-Windows` zip жүктеңіз
+4. Zip-ті ашып, `KazAlerts.exe` іске қосыңыз
+
+Релизге автомат шығару үшін tag-пен push жасаңыз:
+
+```powershell
+git tag desktop-v1.0.0
+git push origin desktop-v1.0.0
+```
+
+Сонда GitHub Release-ке `KazAlerts-Windows.zip` тіркеледі.
+
+### Вариант B: Локалда exe build жасау
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_desktop.ps1
+```
+
+Нәтиже:
+
+- `dist\KazAlerts\KazAlerts.exe` (portable folder)
+- `dist\KazAlerts-Windows.zip` (таратуға дайын)
+
 ## Локал іске қосу
 
 ```powershell
@@ -285,21 +316,23 @@ Production-та мына ережені ұстаныңыз:
   - `KAZ_ALERTS_CONNECT_URL=https://your-domain.com/api/cloud/claim-device`
   - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
   - `KAZ_ALERTS_API_KEY=<міндетті емес, code flow қолдансаңыз автомат келеді>`
-3. `start_no_terminal.bat` файлын екі рет басыңыз.
-4. Скрипт `pythonw` арқылы `run.py` іске қосады, терминал шықпайды.
+3. Егер Python-пен жұмыс істесеңіз: `start_no_terminal.bat` файлын екі рет басыңыз.
+4. Егер дайын build-пен жұмыс істесеңіз: `KazAlerts.exe` іске қосыңыз.
 5. Программа Streamer ID және cloud token-ды есіне сақтайды, келесі жолы қайта жазу міндетті емес.
 
 Автоқосу керек болса:
 
 1. `Win + R` басыңыз
 2. `shell:startup` жазыңыз
-3. Ашылған Startup папкасына `start_no_terminal.bat` shortcut-ын салыңыз
+3. Ашылған Startup папкасына `start_no_terminal.bat` немесе `KazAlerts.exe` shortcut-ын салыңыз
 
 Немесе shortcut-ты автомат жасау үшін:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install_startup_shortcut.ps1
 ```
+
+Бұл скрипт `KazAlerts.exe` бар болса соны, болмаса `start_no_terminal.bat`-ты автоқосуға тіркейді.
 
 Сонда Windows қосылған сайын программа автомат ашылады.
 

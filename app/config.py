@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 
 
 def _read_int_env(name: str, default: int) -> int:
@@ -25,13 +26,35 @@ def _derive_connect_api_url(ingest_url: str) -> str:
         return f"{value[:-len('/ingest')]}/claim-device"
     return ""
 
+
+def _is_frozen_runtime() -> bool:
+    return bool(getattr(sys, "frozen", False))
+
+FROZEN_RUNTIME = _is_frozen_runtime()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
+APP_DIR = Path(sys.executable).resolve().parent if FROZEN_RUNTIME else BASE_DIR
+RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", APP_DIR if FROZEN_RUNTIME else BASE_DIR))
+
+if FROZEN_RUNTIME:
+    appdata_root = Path(os.getenv("APPDATA", str(Path.home())))
+    DATA_DIR = appdata_root / "KazAlerts" / "data"
+else:
+    DATA_DIR = BASE_DIR / "data"
+
 DEBUG_DIR = DATA_DIR / "debug"
-WEB_DIR = BASE_DIR / "web"
+
+_web_candidates = [
+    RESOURCE_DIR / "web",
+    APP_DIR / "web",
+    BASE_DIR / "web",
+]
+WEB_DIR = next((candidate for candidate in _web_candidates if candidate.exists()), _web_candidates[0])
+
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-WEB_DIR.mkdir(parents=True, exist_ok=True)
+if not WEB_DIR.exists() and not FROZEN_RUNTIME:
+    WEB_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = DATA_DIR / "app.db"
 WEB_SETTINGS_PATH = DATA_DIR / "overlay_settings.json"
