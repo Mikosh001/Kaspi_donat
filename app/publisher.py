@@ -3,12 +3,14 @@ from __future__ import annotations
 import requests
 
 from app.config import SITE_API_KEY, SITE_API_URL
+from app.firebase_direct import FirebaseDirectPublisher
 from app.models import PublishPayload
 
 
 class Publisher:
     def __init__(self, log_callback=None):
         self.log_callback = log_callback
+        self.firebase_direct = FirebaseDirectPublisher(log_callback=self.log)
 
     def log(self, text: str):
         if self.log_callback:
@@ -16,7 +18,7 @@ class Publisher:
 
     def can_publish(self, api_url: str | None = None) -> bool:
         target = (api_url or SITE_API_URL or "").strip()
-        return bool(target)
+        return bool(target) or self.firebase_direct.is_configured()
 
     def publish(
         self,
@@ -27,7 +29,21 @@ class Publisher:
         api_url: str | None = None,
     ):
         target_api_url = (api_url or SITE_API_URL or "").strip()
-        if not self.can_publish(target_api_url):
+
+        if self.firebase_direct.is_configured():
+            try:
+                self.firebase_direct.publish(
+                    streamer_id=streamer_id,
+                    parsed=parsed,
+                    device_id=device_id,
+                )
+                return True
+            except Exception as exc:
+                self.log(f"[firebase] publish error: {exc}")
+                if not target_api_url:
+                    raise
+
+        if not target_api_url:
             self.log("[publisher] API URL орнатылмаған, тек локальды сақталды")
             return True
 

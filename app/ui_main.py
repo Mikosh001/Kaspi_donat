@@ -24,6 +24,9 @@ from app.config import (
     AUTO_START_LISTENER,
     CONNECT_API_URL,
     DEFAULT_STREAMER_ID,
+    FIREBASE_AUTH_EMAIL,
+    FIREBASE_DIRECT_ENABLED,
+    FIREBASE_PROJECT_ID,
     SITE_API_URL,
     WEB_HOST,
     WEB_PORT,
@@ -44,6 +47,7 @@ class MainWindow(QWidget):
         self.device_auth_store = DeviceAuthStore()
         self.device_auth = self.device_auth_store.load()
         self.cloud_connect_client = CloudConnectClient()
+        self.firebase_direct_mode = bool(FIREBASE_DIRECT_ENABLED)
         self.service = DonationService(
             streamer_id_getter=self.get_streamer_id,
             log_callback=self.threadsafe_log,
@@ -92,7 +96,11 @@ class MainWindow(QWidget):
         root.addWidget(device_info)
 
         cloud_info = QLabel(
-            f"Cloud connect URL: {CONNECT_API_URL or '(орнатылмаған)'}"
+            (
+                f"Firebase direct mode: {FIREBASE_PROJECT_ID or '(project id жоқ)'}"
+                if self.firebase_direct_mode
+                else f"Cloud connect URL: {CONNECT_API_URL or '(орнатылмаған)'}"
+            )
         )
         cloud_info.setStyleSheet("color: #455a64; font-size: 11px;")
         root.addWidget(cloud_info)
@@ -111,6 +119,12 @@ class MainWindow(QWidget):
         self.cloud_disconnect_btn.clicked.connect(self.disconnect_cloud_device)
         cloud_row.addWidget(self.cloud_disconnect_btn)
         root.addLayout(cloud_row)
+
+        if self.firebase_direct_mode:
+            self.cloud_code_input.setEnabled(False)
+            self.cloud_code_input.setPlaceholderText("Firebase direct mode active")
+            self.cloud_connect_btn.setEnabled(False)
+            self.cloud_disconnect_btn.setEnabled(False)
 
         self.cloud_status_label = QLabel()
         self.cloud_status_label.setStyleSheet("color: #37474f; font-size: 12px; font-weight: 600;")
@@ -214,6 +228,16 @@ class MainWindow(QWidget):
         )
 
     def refresh_cloud_status(self):
+        if self.firebase_direct_mode:
+            scoped_streamer_id = self.get_scoped_streamer_id() or "(streamer id қажет)"
+            self.cloud_status_label.setText(
+                "Firebase direct: "
+                f"project={FIREBASE_PROJECT_ID or '(missing)'} | "
+                f"email={FIREBASE_AUTH_EMAIL or '(missing)'} | "
+                f"scope={scoped_streamer_id}"
+            )
+            return
+
         linked_streamer_id = normalize_streamer_id(self.device_auth.get("streamer_id") or "")
         has_token = bool(str(self.device_auth.get("token") or "").strip())
         ingest_url = str(self.device_auth.get("ingest_url") or "").strip()
@@ -229,6 +253,14 @@ class MainWindow(QWidget):
         )
 
     def connect_cloud_device(self):
+        if self.firebase_direct_mode:
+            QMessageBox.warning(
+                self,
+                "Cloud connect",
+                "Firebase direct mode қосулы. One-time code бұл режимде қолданылмайды.",
+            )
+            return
+
         if not self.cloud_connect_client.can_connect():
             QMessageBox.warning(
                 self,
@@ -259,6 +291,14 @@ class MainWindow(QWidget):
         self.log_box.append("[cloud] құрылғы Cloud профиліне сәтті байланыстырылды")
 
     def disconnect_cloud_device(self):
+        if self.firebase_direct_mode:
+            QMessageBox.warning(
+                self,
+                "Cloud connect",
+                "Firebase direct mode қосулы. Локальды one-time code сессиясы қолданылмайды.",
+            )
+            return
+
         self.device_auth_store.clear()
         self.device_auth = {}
         self.refresh_cloud_status()

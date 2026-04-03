@@ -6,15 +6,14 @@
     { "src": "web/**", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://us-central1-kaspi-donate.cloudfunctions.net/api/:path*" },
-
-    { "source": "/s/:streamer_id", "destination": "/admin" },
-    { "source": "/s/:streamer_id/", "destination": "/admin" },
-    { "source": "/s/:streamer_id/widget", "destination": "/widget" },
-    { "source": "/s/:streamer_id/widgetyt", "destination": "/widgetyt" },
-    { "source": "/s/:streamer_id/stats", "destination": "/stats" },
-    { "source": "/s/:streamer_id/goal", "destination": "/goal" },
-    { "source": "/s/:streamer_id/connect", "destination": "/connect" },
+    { "source": "/s/:streamerId", "destination": "/admin" },
+    { "source": "/s/:streamerId/", "destination": "/admin" },
+    { "source": "/s/:streamerId/widget", "destination": "/widget" },
+    { "source": "/s/:streamerId/widgetyt", "destination": "/widgetyt" },
+    { "source": "/s/:streamerId/stats", "destination": "/stats" },
+    { "source": "/s/:streamerId/goal", "destination": "/goal" },
+    { "source": "/s/:streamerId/connect", "destination": "/connect" },
+    { "source": "/s/:streamerId/:path*", "destination": "/:path*" },
 
     { "source": "/", "destination": "/admin" },
     { "source": "/connect", "destination": "/connect" },

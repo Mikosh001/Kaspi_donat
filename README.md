@@ -87,81 +87,60 @@ http://127.0.0.1:3400/s/<streamer_id>/
 
 5. Осы streamer route ішінде сақталған барлық settings тек сол профильге тиесілі болады (settings sync).
 
-## Donor reader -> Cloud ingest байланыстыру
+## Donor reader -> Firebase direct (free tier)
 
-Desktop donor reader-ден cloud backend-ке жіберу үшін env орнатыңыз:
+Енді негізгі режим Cloud Functions-сыз жұмыс істейді: Desktop app Firebase Auth арқылы Firestore-ға тікелей жазады.
+
+Desktop app үшін env:
 
 ```powershell
-$env:KAZ_ALERTS_API_URL="https://your-domain.com/api/cloud/ingest"
-$env:KAZ_ALERTS_API_KEY="<streamer_token>"
+$env:KAZ_ALERTS_FIREBASE_DIRECT="1"
+$env:KAZ_ALERTS_FIREBASE_API_KEY="<web-api-key>"
+$env:KAZ_ALERTS_FIREBASE_PROJECT_ID="<project-id>"
+$env:KAZ_ALERTS_FIREBASE_AUTH_EMAIL="<streamer-email>"
+$env:KAZ_ALERTS_FIREBASE_AUTH_PASSWORD="<streamer-password>"
 python run.py
 ```
 
 Desktop UI-да дәл сол `Streamer ID` енгізіңіз.
 
-Email/Password + one-time code режимі үшін (ұсынылатын жол):
+Web connect flow:
 
-1. Алдымен web-тегі `/connect` бетін ашыңыз
+1. `/connect` ашыңыз
 2. Firebase Auth арқылы Sign up/Sign in жасаңыз
-3. `One-time code жасау` батырмасын басыңыз
-4. Desktop app-та сол code-ты `Cloud-қа қосу` арқылы енгізіңіз
-5. Осыдан кейін token локал сақталады, күнде қайта енгізу керек емес
+3. `Streamer profile сақтау` батырмасын басыңыз
+4. Сол profile үшін `streamer_id`-ды Desktop app-та қолданыңыз
 
 Терминал қолданбаймын десеңіз:
 
 1. `local.env.example.bat` файлын `local.env.bat` деп көшіріңіз
-2. Ішіне өз `KAZ_ALERTS_API_URL` және `KAZ_ALERTS_API_KEY` мәндерін жазыңыз
+2. Ішіне `KAZ_ALERTS_FIREBASE_*` мәндерін жазыңыз
 3. Кейін тек `start_no_terminal.bat` арқылы іске қосыңыз
 
-Сонда әр донат:
+Бұл режимде әр донат:
 - `streamer_id` бойынша сақталады
-- `device_id` бірге жіберіледі
-- профильдің widget-іне түседі
+- `device_id` бірге жазылады
+- analytics (`top day/week/month`, `average`, `repeat`) Firestore-да жаңарады
 
-## Firebase-first режим (Email/Password + One-time Code)
+## Firebase Direct Режим (Email/Password + Firestore)
 
-Бұл репода Firebase backend дайын күйде бар:
+Бұл free-tier friendly архитектура:
 
-- `firebase/functions/src/index.js` - Cloud Functions API
-- `firebase/firestore.rules` - қауіпсіздік ережелері
-- `firebase/firestore.indexes.json` - индекстер
-- `web/connect.html` - Email/Password + one-time code беті
+- `web/common.js` - `/api/*` шақыруларын Firestore direct mode-қа ауыстырады
+- `app/firebase_direct.py` - Desktop publish-ті Firestore-ға тікелей жібереді
+- `firebase/firestore.rules` - owner-only write, public read
 
-Артықшылығы:
-
-1. Әр стример өз Firebase аккаунтымен кіреді.
-2. Desktop app бір рет code арқылы байланысады.
-3. Донат analytics қайта-қайта есептелмейді, ingest кезінде дайын summary жаңарады.
-4. Көп стример толық бөлек сақталады (streamer_id scope).
-
-Firebase deploy қысқаша:
+Deploy (Spark тарифімен болады):
 
 ```powershell
-cd firebase\functions
-npm install
-cd ..\..
 firebase login --no-localhost
-firebase deploy --only functions:default:api,firestore:rules,firestore:indexes
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 Егер `firebase` командасы табылмаса:
 
 ```powershell
 npm install -g firebase-tools
-```
-
-Ескерту: Firebase Functions deploy үшін жоба `Blaze` (pay-as-you-go) тарифінде болуы керек.
-
-Егер қазір Spark тарифінде болсаңыз, уақытша тек Firestore бөлігін жіберуге болады:
-
-```powershell
-firebase deploy --only firestore:rules,firestore:indexes
-```
-
-Deploy сәтті болғанын тексеру:
-
-```text
-https://us-central1-kaspi-donate.cloudfunctions.net/api/health
 ```
 
 Толық нұсқаулық: `firebase/README.md`
@@ -197,14 +176,14 @@ http://127.0.0.1:3400/s/<streamer_id>/goal
 http://127.0.0.1:3400/s/<streamer_id>/api/analytics/summary
 ```
 
-## Cloud API endpoint-тер
+## Legacy Cloud API endpoint-тер (optional)
+
+Ескі backend mode керек болса ғана қолданылады (`python run_web.py`):
 
 - `POST /api/cloud/register`
 - `POST /api/cloud/rotate-token`
 - `POST /api/cloud/bind-device`
 - `POST /api/cloud/ingest`
-- `POST /api/cloud/create-connect-code`
-- `POST /api/cloud/claim-device`
 - `GET /api/cloud/profile?streamer_id=...`
 - `GET /api/cloud/settings?streamer_id=...`
 - `POST /api/cloud/settings?streamer_id=...`
@@ -227,46 +206,19 @@ git push -u origin main
 
 ## Vercel-ге қосу
 
-Жоба ішінде desktop reader (PySide6 + UIAutomation) және Python HTTP backend бар.
+Жоба ішінде desktop reader (PySide6 + UIAutomation) және web overlay бар.
 
 - Desktop reader бөлігі Vercel-де жүрмейді (ол Windows desktop app).
-- Cloud web/API бөлігін production-да әрқашан қосулы backend ретінде шығару керек (Render/Railway/VPS).
-- Vercel-ді static front + API proxy/domain қабаты ретінде пайдалануға болады.
+- Web overlay Vercel-де таза static ретінде жүреді.
+- `/api/*` шақырулары web/common.js ішінде Firestore direct mode-қа ішкі түрде ауысады (proxy қажет емес).
 
 Қадамдар:
 
-1. Алдымен Python backend-ті Render/Railway/VPS-қа шығарыңыз.
-   - Start command: `python run_web.py`
-  - Репода `Procfile` бар (`web: python run_web.py`)
-   - Міндетті env:
-     - `KAZ_ALERTS_WEB_HOST=0.0.0.0`
-  - `KAZ_ALERTS_ENFORCE_STREAMER_SCOPE=1`
-     - `KAZ_ALERTS_PUBLIC_BASE_URL=https://your-domain.com` (немесе backend домені)
-     - `KAZ_ALERTS_DATABASE_URL=...` (production database)
-2. Vercel-де осы GitHub репоны импорттаңыз.
-3. `Root Directory` ретінде `web` таңдаңыз.
-4. `web/vercel.json` ішіндегі мына жолды өз backend URL-ыңызға ауыстырыңыз:
-
-```json
-{ "source": "/api/:path*", "destination": "https://replace-me-backend-domain.example/api/:path*" }
-```
-
-5. Deploy жасаңыз.
-6. Vercel Project Settings -> Domains арқылы өз доменіңізді қосыңыз.
-
-Егер Vercel мына қатені берсе:
-`No python entrypoint found...`
-
-Жылдам шешім:
-
-1. Project Settings -> General -> Root Directory мәнін `web` қылыңыз.
-2. Redeploy жасаңыз.
-
-Балама шешім (Root Directory-ді өзгертпей):
-
-1. Репо root-та `vercel.json` бар, ол static build-ті мәжбүрлейді.
-2. Осы файлдағы `/api/:path*` destination-ды өз backend URL-ыңызға ауыстырыңыз.
-3. Redeploy жасаңыз.
+1. Vercel-де осы GitHub репоны импорттаңыз.
+2. `Root Directory` ретінде `web` таңдаңыз (немесе root vercel.json қолдансаңыз, root-та қалдырыңыз).
+3. `web/firebase-config.js` ішінде `window.KAZ_FIREBASE_DIRECT_MODE = true` екеніне көз жеткізіңіз.
+4. Deploy жасаңыз.
+5. Vercel Project Settings -> Domains арқылы өз доменіңізді қосыңыз.
 
 Domain үшін `KAZ_ALERTS_PUBLIC_BASE_URL` орнатыңыз:
 
@@ -282,9 +234,8 @@ $env:KAZ_ALERTS_PUBLIC_BASE_URL="https://your-domain.com"
 
 1. Көрермен/OBS мына URL ашады: `https://your-domain.com/s/streamer123/widget`
 2. Frontend path-тан `streamer123` контекстін оқиды.
-3. API шақырулар `/api/...` арқылы сол доменде жасалады.
-4. Vercel rewrite бұл API сұрауларын backend-ке проксилейді.
-5. Backend `streamer_id` бойынша нақты профильдің settings/donation/analytics дерегін қайтарады.
+3. Web ішіндегі `/api/...` сұраулары common.js арқылы Firestore direct handler-ге түседі.
+4. Firestore-дан `streamer_id` scope бойынша settings/donation/analytics алынады.
 
 Нәтиже: бір доменде көп streamer қатар жұмыс істейді, әрқайсысының өз профилі, баптауы, аналитикасы бөлек.
 
@@ -296,14 +247,12 @@ Production-та мына ережені ұстаныңыз:
   - `/s/<streamer_id>/`
   - `/s/<streamer_id>/widget`
   - `/s/<streamer_id>/stats?board=top_day`
-2. Backend env-та `KAZ_ALERTS_ENFORCE_STREAMER_SCOPE=1` міндетті.
-3. Әр стример admin-да бір рет `Register` жасайды және жеке token алады.
-4. Әр стример desktop reader-інде өз token-ын ғана қолданады:
-  - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
-  - `KAZ_ALERTS_API_KEY=<осы стримердің token-ы>`
+2. Firestore rules owner-only write болсын (`firebase/firestore.rules` осыны жасайды).
+3. Әр стример `/connect` бетінде өз email/password-пен кіріп, profile сақтайды.
+4. Desktop reader сол стримердің `KAZ_ALERTS_FIREBASE_AUTH_EMAIL/PASSWORD` + `Streamer ID` комбинациясымен жүреді.
 5. Root URL (`/widget`, `/stats`) емес, тек scoped URL пайдаланыңыз.
 
-Осы конфигурацияда API сұраулар streamer scope және token арқылы тексеріледі, сондықтан дерек араласпайды.
+Осы конфигурацияда write access тек owner аккаунтқа тиесілі, сондықтан дерек араласпайды.
 
 ## Терминалсыз іске қосу
 
@@ -313,12 +262,14 @@ Production-та мына ережені ұстаныңыз:
 2. `local.env.bat` ішінде мынаны толтырыңыз:
   - `KAZ_ALERTS_STREAMER_ID=<сіздің streamer id>`
   - `KAZ_ALERTS_AUTOSTART=1`
-  - `KAZ_ALERTS_CONNECT_URL=https://your-domain.com/api/cloud/claim-device`
-  - `KAZ_ALERTS_API_URL=https://your-domain.com/api/cloud/ingest`
-  - `KAZ_ALERTS_API_KEY=<міндетті емес, code flow қолдансаңыз автомат келеді>`
+  - `KAZ_ALERTS_FIREBASE_DIRECT=1`
+  - `KAZ_ALERTS_FIREBASE_API_KEY=<firebase web api key>`
+  - `KAZ_ALERTS_FIREBASE_PROJECT_ID=<firebase project id>`
+  - `KAZ_ALERTS_FIREBASE_AUTH_EMAIL=<streamer email>`
+  - `KAZ_ALERTS_FIREBASE_AUTH_PASSWORD=<streamer password>`
 3. Егер Python-пен жұмыс істесеңіз: `start_no_terminal.bat` файлын екі рет басыңыз.
 4. Егер дайын build-пен жұмыс істесеңіз: `KazAlerts.exe` іске қосыңыз.
-5. Программа Streamer ID және cloud token-ды есіне сақтайды, келесі жолы қайта жазу міндетті емес.
+5. Программа Streamer ID-ды есіне сақтайды, келесі жолы қайта жазу міндетті емес.
 
 Автоқосу керек болса:
 
@@ -338,15 +289,14 @@ powershell -ExecutionPolicy Bypass -File .\install_startup_shortcut.ps1
 
 ### Бұлтта (әрқашан қосулы режим)
 
-- Backend-ті Render/Railway/VPS-та Web Service ретінде қосасыз.
-- Қызмет үнемі online тұрады, терминал ашып отыру керек емес.
+- Vercel static hosting + Firestore direct mode комбинациясын қолданыңыз.
+- Қосымша backend сервис міндетті емес.
 - Desktop reader бөлігі streamer компьютерінде локал қосылады (немесе бөлек Windows VM/PC).
 
 ## Қысқаша архитектура flow
 
 1. Desktop app Phone Link-тен Kaspi хабарламаны оқиды.
 2. Parser донатты бөледі, dedupe тексереді, local DB-ға жазады.
-3. Егер `KAZ_ALERTS_API_URL` орнатылса, донат cloud ingest endpoint-ке жіберіледі.
-4. Cloud side донатты streamer профиліне сақтайды, device binding жаңартады.
-5. Streamer route widget-тері (`/s/<id>/widget`, `/stats`, `/goal`) сол профиль дерегін тартады.
-6. Analytics API average/repeat/top day-week-month есептеп береді.
+3. Firebase direct қосулы болса, donation Firestore-ға тікелей жазылады.
+4. Firestore ішінде analytics және leaderboard құжаттары жаңартылады.
+5. Streamer route widget-тері (`/s/<id>/widget`, `/stats`, `/goal`) сол профиль дерегін тікелей Firestore-дан тартады.

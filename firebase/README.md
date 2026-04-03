@@ -1,88 +1,60 @@
-# Firebase Backend
+# Firebase Direct Setup
 
-This folder contains a Firebase-first backend for Kaz Alerts:
+This folder now targets a Functions-free architecture:
 
-- Email/Password auth can be handled by Firebase Authentication.
-- One-time device connect code API is in Cloud Functions.
-- Donations, settings, and precomputed analytics are stored in Firestore.
+- Web overlay reads/writes Firestore directly (via Firebase Web SDK).
+- Desktop app writes donations to Firestore directly (via Firebase REST + Auth).
+- Multi-tenant isolation is enforced by Firestore Rules owner checks.
 
 ## Structure
 
-- `functions/src/index.js` - HTTP API (`functions:api`) compatible with existing `/api/*` frontend calls.
-- `firestore.rules` - Firestore security rules (default deny; API goes through Functions admin SDK).
-- `firestore.indexes.json` - index config.
+- `firestore.rules` - owner-only write + public read rules for `streamers/*`.
+- `firestore.indexes.json` - indexes for direct mode queries.
+- `functions/` - legacy optional backend code (not required for direct mode).
 
-## Deploy
+## Deploy (Spark Friendly)
 
-1. Copy `.firebaserc.example` to `.firebaserc` and set your project id.
-2. Install Firebase CLI and login:
+1. Copy `.firebaserc.example` to `.firebaserc` and set project id.
+2. Install CLI and login:
 
 ```bash
 npm i -g firebase-tools
 firebase login
 ```
 
-3. Install functions dependencies:
-
-```bash
-cd firebase/functions
-npm install
-```
-
-4. Deploy functions + firestore config:
-
-```bash
-cd ..
-firebase deploy --only functions:default:api,firestore:rules,firestore:indexes
-```
-
-Important:
-
-- Cloud Functions deployment requires Firebase Blaze plan.
-- If your project is still on Spark, deploy Firestore only for now:
+3. Deploy Firestore security config:
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
-## API Endpoints
+No Cloud Functions deployment is required for the main flow.
 
-Function base URL example:
+## Data Model (Direct Mode)
 
-`https://us-central1-<project-id>.cloudfunctions.net/api`
+- `streamers/{streamer_id}`: profile (`owner_uid`, `display_name`, `token`, `last_seq`)
+- `streamers/{streamer_id}/settings/main`: overlay settings (`data`)
+- `streamers/{streamer_id}/donations/*`: donation events
+- `streamers/{streamer_id}/analytics/current`: summary metrics
+- `streamers/{streamer_id}/donor_stats/*`: per-donor counters
+- `streamers/{streamer_id}/leaderboards/*`: day/week/month top lists
+- `streamers/{streamer_id}/devices/*`: known devices
 
-Main routes (same shape as existing web client):
+## Auth Model
 
-- `GET /health`
-- `GET /state`
-- `GET /settings`
-- `POST /settings`
-- `GET /feed`
-- `GET /donations`
-- `GET /music-feed`
-- `GET /stats/:board`
-- `GET /goal`
-- `GET /analytics/summary`
-- `GET /profile`
-- `POST /test-donation`
-- `POST /cloud/register`
-- `POST /cloud/rotate-token`
-- `POST /cloud/bind-device`
-- `POST /cloud/ingest`
-- `POST /cloud/create-connect-code`
-- `POST /cloud/claim-device`
+1. Streamer signs in with Firebase Email/Password.
+2. Streamer saves profile on `/connect` page.
+3. Profile stores `owner_uid = auth.uid`.
+4. Firestore rules allow writes only when `request.auth.uid == owner_uid`.
 
-## One-time Code Flow
+## Desktop Environment Variables
 
-1. Streamer signs in via Firebase Auth (Email/Password) in the web client.
-2. Web client calls `POST /cloud/create-connect-code` with Firebase ID token.
-3. Desktop app enters code and calls `POST /cloud/claim-device`.
-4. Desktop receives `streamer_id` + ingest `token` and uses it for `/cloud/ingest`.
+- `KAZ_ALERTS_FIREBASE_DIRECT=1`
+- `KAZ_ALERTS_FIREBASE_API_KEY=<web api key>`
+- `KAZ_ALERTS_FIREBASE_PROJECT_ID=<project id>`
+- `KAZ_ALERTS_FIREBASE_AUTH_EMAIL=<streamer email>`
+- `KAZ_ALERTS_FIREBASE_AUTH_PASSWORD=<streamer password>`
 
-## Important Env Vars (Functions)
+## Legacy Optional Mode
 
-- `KAZ_ALERTS_PUBLIC_BASE_URL=https://your-domain.com`
-- `KAZ_ALERTS_ENFORCE_STREAMER_SCOPE=1`
-- `KAZ_ALERTS_DEFAULT_STREAMER_ID=default`
-- `KAZ_ALERTS_FIREBASE_REGION=us-central1`
-- `KAZ_ALERTS_CONNECT_CODE_TTL_SECONDS=600`
+If you still want HTTP `/api/*` backend mode, the old Functions implementation is available in `functions/src/index.js`, but it is not required for direct mode.

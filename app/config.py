@@ -70,6 +70,20 @@ PUBLIC_BASE_URL = os.getenv("KAZ_ALERTS_PUBLIC_BASE_URL", "").strip().rstrip("/"
 DEFAULT_STREAMER_ID = os.getenv("KAZ_ALERTS_STREAMER_ID", "").strip()
 AUTO_START_LISTENER = _read_bool_env("KAZ_ALERTS_AUTOSTART", default=False)
 
+FIREBASE_API_KEY = os.getenv("KAZ_ALERTS_FIREBASE_API_KEY", "").strip()
+FIREBASE_PROJECT_ID = os.getenv("KAZ_ALERTS_FIREBASE_PROJECT_ID", "").strip()
+FIREBASE_AUTH_EMAIL = os.getenv("KAZ_ALERTS_FIREBASE_AUTH_EMAIL", "").strip()
+FIREBASE_AUTH_PASSWORD = os.getenv("KAZ_ALERTS_FIREBASE_AUTH_PASSWORD", "").strip()
+FIREBASE_DIRECT_ENABLED = _read_bool_env(
+    "KAZ_ALERTS_FIREBASE_DIRECT",
+    default=bool(
+        FIREBASE_API_KEY
+        and FIREBASE_PROJECT_ID
+        and FIREBASE_AUTH_EMAIL
+        and FIREBASE_AUTH_PASSWORD
+    ),
+)
+
 PHONE_LINK_TITLES = [
     "Связь с телефоном",
     "Phone Link",

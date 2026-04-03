@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -6,6 +6,8 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics.js";
 
 const statusBox = document.getElementById("status-box");
 const emailInput = document.getElementById("auth-email");
@@ -16,9 +18,24 @@ const codeBox = document.getElementById("connect-code");
 const expiresBox = document.getElementById("connect-expires");
 
 const firebaseConfig = window.KAZ_FIREBASE_CONFIG || null;
-const apiBase = (window.KAZ_FIREBASE_API_BASE || "/api").replace(/\/+$/, "");
 
 let auth = null;
+let db = null;
+
+async function initAnalytics(app) {
+  try {
+    if (!firebaseConfig?.measurementId) {
+      return;
+    }
+    const supported = await isSupported();
+    if (!supported) {
+      return;
+    }
+    getAnalytics(app);
+  } catch (_) {
+    // Analytics is optional; auth/firestore flow must continue even if unavailable.
+  }
+}
 
 function setStatus(text, isError = false) {
   statusBox.textContent = text;
@@ -35,27 +52,67 @@ function normalizeStreamerId(value) {
     .slice(0, 64);
 }
 
-async function callApi(path, payload) {
+function randomToken(length = 48) {
+  const bytes = new Uint8Array(Math.max(16, length));
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("").slice(0, length);
+}
+
+async function ensureSignedInUser() {
   const user = auth?.currentUser;
   if (!user) {
     throw new Error("Алдымен Sign in жасаңыз");
   }
+  return user;
+}
 
-  const idToken = await user.getIdToken();
-  const response = await fetch(`${apiBase}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${idToken}`
-    },
-    body: JSON.stringify(payload || {})
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data?.error || `HTTP ${response.status}`);
+async function saveStreamerProfile() {
+  const user = await ensureSignedInUser();
+  const streamerId = normalizeStreamerId(streamerIdInput.value || user.uid);
+  if (!streamerId) {
+    throw new Error("Streamer ID енгізіңіз");
   }
-  return data;
+
+  const displayName = String(displayNameInput.value || user.email || streamerId).trim();
+  const profileRef = doc(db, "streamers", streamerId);
+  const profileSnap = await getDoc(profileRef);
+  const current = profileSnap.exists() ? (profileSnap.data() || {}) : {};
+
+  const ownerUid = String(current.owner_uid || "");
+  if (ownerUid && ownerUid !== user.uid) {
+    throw new Error("Бұл streamer_id басқа аккаунтқа тиесілі");
+  }
+
+  const nowIso = new Date().toISOString();
+  await setDoc(
+    profileRef,
+    {
+      streamer_id: streamerId,
+      display_name: displayName,
+      owner_uid: user.uid,
+      token: String(current.token || "").trim() || randomToken(),
+      created_at_iso: String(current.created_at_iso || "").trim() || nowIso,
+      updated_at_iso: nowIso
+    },
+    { merge: true }
+  );
+
+  const settingsRef = doc(db, "streamers", streamerId, "settings", "main");
+  const settingsSnap = await getDoc(settingsRef);
+  if (!settingsSnap.exists()) {
+    await setDoc(
+      settingsRef,
+      {
+        data: {},
+        updated_at_iso: nowIso
+      },
+      { merge: true }
+    );
+  }
+
+  codeBox.textContent = streamerId;
+  expiresBox.textContent = "One-time code қажет емес. Desktop-та осы streamer_id қолданыңыз.";
+  setStatus("Профиль сақталды. Енді /s/<streamer_id>/ URL арқылы admin/widget ашуға болады.");
 }
 
 function bindAuthButtons() {
@@ -67,7 +124,7 @@ function bindAuthButtons() {
         throw new Error("Email және password толтырыңыз");
       }
       await createUserWithEmailAndPassword(auth, email, password);
-      setStatus("Аккаунт ашылды, енді code жасауға болады");
+      setStatus("Аккаунт ашылды. Енді Sign in күйінде профиль сақтай аласыз.");
     } catch (error) {
       setStatus(error.message || "Sign up қатесі", true);
     }
@@ -81,7 +138,7 @@ function bindAuthButtons() {
         throw new Error("Email және password толтырыңыз");
       }
       await signInWithEmailAndPassword(auth, email, password);
-      setStatus("Sign in сәтті")
+      setStatus("Sign in сәтті");
     } catch (error) {
       setStatus(error.message || "Sign in қатесі", true);
     }
@@ -98,20 +155,9 @@ function bindAuthButtons() {
 
   document.getElementById("create-code").addEventListener("click", async () => {
     try {
-      const streamerId = normalizeStreamerId(streamerIdInput.value);
-      const displayName = displayNameInput.value.trim();
-      if (!streamerId) {
-        throw new Error("Streamer ID енгізіңіз");
-      }
-      const data = await callApi("/cloud/create-connect-code", {
-        streamer_id: streamerId,
-        display_name: displayName
-      });
-      codeBox.textContent = data.code || "--------";
-      expiresBox.textContent = data.expires_at_ms ? new Date(data.expires_at_ms).toLocaleString() : "-";
-      setStatus("One-time code дайын. Desktop app-та Cloud-қа қосу бөліміне енгізіңіз.");
+      await saveStreamerProfile();
     } catch (error) {
-      setStatus(error.message || "Code жасау қатесі", true);
+      setStatus(error.message || "Профиль сақтау қатесі", true);
     }
   });
 }
@@ -122,8 +168,10 @@ function init() {
     return;
   }
 
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  initAnalytics(app);
   auth = getAuth(app);
+  db = getFirestore(app);
   bindAuthButtons();
 
   onAuthStateChanged(auth, (user) => {
@@ -137,7 +185,7 @@ function init() {
       }
       return;
     }
-    setStatus("Sign in жасаңыз, содан кейін one-time code аласыз");
+    setStatus("Sign in жасаңыз, содан кейін streamer profile сақтаңыз");
   });
 }
 
