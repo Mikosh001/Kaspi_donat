@@ -10,14 +10,13 @@
     { "source": "/stats", "destination": "/stats.html" },
     { "source": "/goal", "destination": "/goal.html" },
 
-    { "source": "/s/:streamer_id", "destination": "/admin.html" },
-    { "source": "/s/:streamer_id/", "destination": "/admin.html" },
-    { "source": "/s/:streamer_id/widget", "destination": "/widget.html" },
-    { "source": "/s/:streamer_id/widgetyt", "destination": "/widgetyt.html" },
-    { "source": "/s/:streamer_id/stats", "destination": "/stats.html" },
-    { "source": "/s/:streamer_id/goal", "destination": "/goal.html" },
-    { "source": "/s/:streamer_id/connect", "destination": "/connect.html" },
-
-    { "source": "/api/:path*", "destination": "https://us-central1-kaspi-donate.cloudfunctions.net/api/:path*" }
+    { "source": "/s/:streamerId", "destination": "/admin.html" },
+    { "source": "/s/:streamerId/", "destination": "/admin.html" },
+    { "source": "/s/:streamerId/widget", "destination": "/widget.html" },
+    { "source": "/s/:streamerId/widgetyt", "destination": "/widgetyt.html" },
+    { "source": "/s/:streamerId/stats", "destination": "/stats.html" },
+    { "source": "/s/:streamerId/goal", "destination": "/goal.html" },
+    { "source": "/s/:streamerId/connect", "destination": "/connect.html" },
+    { "source": "/s/:streamerId/:path*", "destination": "/:path*" }
   ]
 }
