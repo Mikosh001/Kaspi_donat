@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import requests
 
-from app.config import SITE_API_KEY, SITE_API_URL
+from app.config import ALLOW_API_FALLBACK, SITE_API_KEY, SITE_API_URL
 from app.firebase_direct import FirebaseDirectPublisher
 from app.models import PublishPayload
 
@@ -29,6 +29,9 @@ class Publisher:
         api_url: str | None = None,
     ):
         target_api_url = (api_url or SITE_API_URL or "").strip()
+        allow_api_fallback = bool(target_api_url) and (
+            not self.firebase_direct.is_configured() or ALLOW_API_FALLBACK
+        )
 
         if self.firebase_direct.is_configured():
             try:
@@ -40,7 +43,7 @@ class Publisher:
                 return True
             except Exception as exc:
                 self.log(f"[firebase] publish error: {exc}")
-                if not target_api_url:
+                if not allow_api_fallback:
                     raise
 
         if not target_api_url:

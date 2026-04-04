@@ -14,5 +14,6 @@ rem Optional legacy API mode (leave empty when using direct mode)
 set KAZ_ALERTS_CONNECT_URL=
 set KAZ_ALERTS_API_URL=
 set KAZ_ALERTS_API_KEY=
+set KAZ_ALERTS_ALLOW_API_FALLBACK=0
 
 set KAZ_ALERTS_PUBLIC_BASE_URL=https://kaspi-donat.vercel.app

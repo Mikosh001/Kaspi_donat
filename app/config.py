@@ -83,6 +83,10 @@ FIREBASE_DIRECT_ENABLED = _read_bool_env(
         and FIREBASE_AUTH_PASSWORD
     ),
 )
+ALLOW_API_FALLBACK = _read_bool_env(
+    "KAZ_ALERTS_ALLOW_API_FALLBACK",
+    default=not FIREBASE_DIRECT_ENABLED,
+)
 
 PHONE_LINK_TITLES = [
     "Связь с телефоном",

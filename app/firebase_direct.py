@@ -126,6 +126,22 @@ def _from_firestore_document(payload: dict | None) -> dict:
     }
 
 
+def _firebase_error_text(response: requests.Response) -> str:
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+
+    details = payload.get("error") if isinstance(payload, dict) else {}
+    if isinstance(details, dict):
+        message = str(details.get("message") or "").strip()
+        if message:
+            return message
+
+    raw_text = str(getattr(response, "text", "") or "").strip()
+    return raw_text or f"HTTP {response.status_code}"
+
+
 class FirebaseDirectPublisher:
     def __init__(self, log_callback=None):
         self.log_callback = log_callback
@@ -179,7 +195,8 @@ class FirebaseDirectPublisher:
                 "returnSecureToken": True,
             },
         )
-        response.raise_for_status()
+        if response.status_code >= 400:
+            raise ValueError(f"firebase auth failed: {_firebase_error_text(response)}")
         payload = response.json()
 
         self.id_token = str(payload.get("idToken") or "")
