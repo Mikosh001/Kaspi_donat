@@ -457,7 +457,7 @@ async function waitForAuthState(auth) {
       unsubscribe();
       resolve(user || auth.currentUser || null);
     };
-    const timeout = window.setTimeout(() => finish(auth.currentUser || null), 1400);
+    const timeout = window.setTimeout(() => finish(auth.currentUser || null), 5000);
     unsubscribe = auth.onAuthStateChanged(
       (user) => {
         clearTimeout(timeout);

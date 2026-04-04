@@ -40,6 +40,37 @@ function setStatus(message, isError = false) {
   box.style.color = isError ? "#b13220" : "#a74129";
 }
 
+function isAuthFlowError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return (
+    message.includes("sign in")
+    || message.includes("алдымен")
+    || message.includes("insufficient permissions")
+    || message.includes("permission-denied")
+    || message.includes("басқа аккаунтқа тиесілі")
+  );
+}
+
+function buildConnectRedirectUrl() {
+  const nextPath = `${window.location.pathname}${window.location.search}`;
+  const connectPath = scopedRoute("/connect");
+  const separator = connectPath.includes("?") ? "&" : "?";
+  return `${connectPath}${separator}next=${encodeURIComponent(nextPath)}`;
+}
+
+function handleActionError(error) {
+  const message = String(error?.message || error || "Unknown error");
+  if (!isAuthFlowError(error)) {
+    setStatus(message, true);
+    return;
+  }
+
+  setStatus(`${message} /connect бетіне бағытталды...`, true);
+  window.setTimeout(() => {
+    window.location.href = buildConnectRedirectUrl();
+  }, 450);
+}
+
 function styleOptionsHtml(selectedValue) {
   return listAvailableStyles().map((style) => `
     <option value="${style.id}" ${normalizeStyleId(selectedValue) === style.id ? "selected" : ""}>${style.label}</option>
@@ -541,11 +572,11 @@ function attachEvents() {
       renderAliases();
       return queueDraftPreview();
     }
-    if (event.target.id === "save-all-button") return saveAll().catch((error) => setStatus(error.message, true));
-    if (event.target.id === "preview-donation-button") return sendPreviewDonation().catch((error) => setStatus(error.message, true));
-    if (event.target.id === "cloud-register-button") return cloudRegister().catch((error) => setStatus(error.message, true));
-    if (event.target.id === "cloud-bind-button") return cloudBindDevice().catch((error) => setStatus(error.message, true));
-    if (event.target.id === "cloud-rotate-button") return cloudRotateToken().catch((error) => setStatus(error.message, true));
+    if (event.target.id === "save-all-button") return saveAll().catch(handleActionError);
+    if (event.target.id === "preview-donation-button") return sendPreviewDonation().catch(handleActionError);
+    if (event.target.id === "cloud-register-button") return cloudRegister().catch(handleActionError);
+    if (event.target.id === "cloud-bind-button") return cloudBindDevice().catch(handleActionError);
+    if (event.target.id === "cloud-rotate-button") return cloudRotateToken().catch(handleActionError);
     if (event.target.matches("[data-copy-link]")) {
       const input = getById(`copy-link-${event.target.dataset.copyLink}`);
       return copyText(input.value).then(() => setStatus(t("link_copied"))).catch((error) => setStatus(error.message, true));

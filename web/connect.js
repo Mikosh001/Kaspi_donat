@@ -52,6 +52,32 @@ function normalizeStreamerId(value) {
     .slice(0, 64);
 }
 
+function resolveScopedStreamerIdFromPath() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  if (parts[0] !== "s") {
+    return "";
+  }
+  return normalizeStreamerId(parts[1] || "");
+}
+
+function getNextPath() {
+  const value = new URLSearchParams(window.location.search).get("next") || "";
+  if (!value.startsWith("/")) {
+    return "";
+  }
+  return value;
+}
+
+function redirectToNextPath(delayMs = 300) {
+  const nextPath = getNextPath();
+  if (!nextPath) {
+    return;
+  }
+  window.setTimeout(() => {
+    window.location.href = nextPath;
+  }, Math.max(0, Number(delayMs || 0)));
+}
+
 function randomToken(length = 48) {
   const bytes = new Uint8Array(Math.max(16, length));
   window.crypto.getRandomValues(bytes);
@@ -68,7 +94,8 @@ async function ensureSignedInUser() {
 
 async function saveStreamerProfile() {
   const user = await ensureSignedInUser();
-  const streamerId = normalizeStreamerId(streamerIdInput.value || user.uid);
+  const scopedId = resolveScopedStreamerIdFromPath();
+  const streamerId = normalizeStreamerId(streamerIdInput.value || scopedId || user.uid);
   if (!streamerId) {
     throw new Error("Streamer ID енгізіңіз");
   }
@@ -113,6 +140,7 @@ async function saveStreamerProfile() {
   codeBox.textContent = streamerId;
   expiresBox.textContent = "One-time code қажет емес. Desktop-та осы streamer_id қолданыңыз.";
   setStatus("Профиль сақталды. Енді /s/<streamer_id>/ URL арқылы admin/widget ашуға болады.");
+  redirectToNextPath(350);
 }
 
 function bindAuthButtons() {
@@ -139,6 +167,7 @@ function bindAuthButtons() {
       }
       await signInWithEmailAndPassword(auth, email, password);
       setStatus("Sign in сәтті");
+      redirectToNextPath(250);
     } catch (error) {
       setStatus(error.message || "Sign in қатесі", true);
     }
@@ -175,9 +204,12 @@ function init() {
   bindAuthButtons();
 
   onAuthStateChanged(auth, (user) => {
+    const scopedId = resolveScopedStreamerIdFromPath();
     if (user) {
       setStatus(`Кірді: ${user.email || user.uid}`);
-      if (!streamerIdInput.value.trim()) {
+      if (!streamerIdInput.value.trim() && scopedId) {
+        streamerIdInput.value = scopedId;
+      } else if (!streamerIdInput.value.trim()) {
         streamerIdInput.value = normalizeStreamerId(user.uid);
       }
       if (!displayNameInput.value.trim()) {
