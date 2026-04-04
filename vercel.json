@@ -6,21 +6,22 @@
     { "src": "web/**", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/s/:streamerId", "destination": "/admin.html" },
-    { "source": "/s/:streamerId/", "destination": "/admin.html" },
-    { "source": "/s/:streamerId/widget", "destination": "/widget.html" },
-    { "source": "/s/:streamerId/widgetyt", "destination": "/widgetyt.html" },
-    { "source": "/s/:streamerId/stats", "destination": "/stats.html" },
-    { "source": "/s/:streamerId/goal", "destination": "/goal.html" },
-    { "source": "/s/:streamerId/connect", "destination": "/connect.html" },
+    { "source": "/s/:streamerId", "destination": "/admin" },
+    { "source": "/s/:streamerId/", "destination": "/admin" },
+    { "source": "/s/:streamerId/admin", "destination": "/admin" },
+    { "source": "/s/:streamerId/widget", "destination": "/widget" },
+    { "source": "/s/:streamerId/widgetyt", "destination": "/widgetyt" },
+    { "source": "/s/:streamerId/stats", "destination": "/stats" },
+    { "source": "/s/:streamerId/goal", "destination": "/goal" },
+    { "source": "/s/:streamerId/connect", "destination": "/connect" },
     { "source": "/s/:streamerId/:path*", "destination": "/:path*" },
 
-    { "source": "/", "destination": "/admin.html" },
-    { "source": "/connect", "destination": "/connect.html" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/widget", "destination": "/widget.html" },
-    { "source": "/widgetyt", "destination": "/widgetyt.html" },
-    { "source": "/stats", "destination": "/stats.html" },
-    { "source": "/goal", "destination": "/goal.html" }
+    { "source": "/", "destination": "/admin" },
+    { "source": "/connect", "destination": "/connect" },
+    { "source": "/admin", "destination": "/admin" },
+    { "source": "/widget", "destination": "/widget" },
+    { "source": "/widgetyt", "destination": "/widgetyt" },
+    { "source": "/stats", "destination": "/stats" },
+    { "source": "/goal", "destination": "/goal" }
   ]
 }
