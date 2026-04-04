@@ -20,6 +20,7 @@ from app.db import normalize_device_id, normalize_streamer_id
 from app.web_settings import DEFAULT_SETTINGS
 
 _SIGN_IN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+_SIGN_UP_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signUp"
 _REFRESH_TOKEN_URL = "https://securetoken.googleapis.com/v1/token"
 _FIRESTORE_DOCS_URL = "https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents"
 
@@ -196,9 +197,39 @@ class FirebaseDirectPublisher:
             },
         )
         if response.status_code >= 400:
-            raise ValueError(f"firebase auth failed: {_firebase_error_text(response)}")
+            auth_error = _firebase_error_text(response)
+            if auth_error in {"INVALID_LOGIN_CREDENTIALS", "EMAIL_NOT_FOUND"}:
+                try:
+                    self._sign_up()
+                    self.log("[firebase] auth user auto-created via signUp")
+                    return
+                except Exception as signup_exc:
+                    raise ValueError(
+                        f"firebase auth failed: {auth_error}; signUp failed: {signup_exc}"
+                    ) from signup_exc
+            raise ValueError(f"firebase auth failed: {auth_error}")
         payload = response.json()
 
+        self.id_token = str(payload.get("idToken") or "")
+        self.refresh_token = str(payload.get("refreshToken") or "")
+        self.uid = str(payload.get("localId") or "")
+        expires_in = int(payload.get("expiresIn") or 3600)
+        self.expires_at = time.time() + max(300, expires_in - 45)
+
+    def _sign_up(self):
+        response = self._request(
+            "POST",
+            f"{_SIGN_UP_URL}?key={self.api_key}",
+            json={
+                "email": self.email,
+                "password": self.password,
+                "returnSecureToken": True,
+            },
+        )
+        if response.status_code >= 400:
+            raise ValueError(_firebase_error_text(response))
+
+        payload = response.json()
         self.id_token = str(payload.get("idToken") or "")
         self.refresh_token = str(payload.get("refreshToken") or "")
         self.uid = str(payload.get("localId") or "")
