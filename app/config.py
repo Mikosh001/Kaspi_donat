@@ -3,6 +3,40 @@ import os
 import sys
 
 
+def _load_local_env_bat() -> None:
+    root = Path(__file__).resolve().parent.parent
+    env_file = root / "local.env.bat"
+    if not env_file.exists():
+        return
+
+    try:
+        lines = env_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        lower = line.lower()
+        if lower.startswith("rem ") or line.startswith("::"):
+            continue
+
+        if lower.startswith("set "):
+            pair = line[4:]
+            if "=" not in pair:
+                continue
+            key, value = pair.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+_load_local_env_bat()
+
+
 def _read_int_env(name: str, default: int) -> int:
     value = os.getenv(name, str(default)).strip()
     try:
